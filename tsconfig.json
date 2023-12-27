@@ -1,0 +1,13 @@
+{
+  "module": "NodeNext",
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules", "src/__mocks__/", "dist/**/*", "dist/test/**/*"],
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ESNext",
+    "outDir": "dist",
+    "noImplicitAny": false,
+    "resolveJsonModule": true
+  }
+}

@@ -2,5 +2,13 @@
   "name": "boring-table",
   "version": "0.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsnd --ignore-watch node_modules src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
 }
