@@ -8,6 +8,10 @@
     "target": "ESNext",
     "outDir": "dist",
     "noImplicitAny": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "esModuleInterop": true
   }
 }
