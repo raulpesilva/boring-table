@@ -3,21 +3,48 @@ import type { Except, Simplify, UnionToIntersection } from 'type-fest';
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
 // _getDefaultColumnDef: usa o memo para evitar re-render desnecessário
 
-const actions = {
+const events = {
   'update-all:head-row': 'update-all:head-row',
   'update:head-row': 'update:head-row',
   'update:head-cell': 'update:head-cell',
+
   'update-all:body-row': 'update-all:body-row',
   'update:body-row': 'update:body-row',
   'update:body-cell': 'update:body-cell',
+
   'update-all:footer-row': 'update-all:footer-row',
   'update:footer-row': 'update:footer-row',
   'update:footer-cell': 'update:footer-cell',
 } as const;
 
+interface Events {
+  'update:head-rows': void;
+  'update:head-row': any;
+  'update:head-cell': any;
+
+  'update:body-rows': void;
+  'update:body-row': any;
+  'update:body-cell': any;
+
+  'update:footer-rows': void;
+  'update:footer-row': any;
+  'update:footer-cell': any;
+
+  'update:data': void;
+  'update:rows': void;
+  'update:all': void;
+
+  'reset:all': void;
+  'reset:rows': void;
+
+  'change:data': void;
+  'add:data': void;
+}
+
 interface IBoringPlugin {
   name: string;
-  configure?: (arg: BoringTable) => any;
+  configure?: (table: BoringTable) => any;
+  onUpdateData?: () => any;
   onMount?: () => any;
   onReset?: () => any;
   extend?: () => any;
@@ -35,6 +62,8 @@ class BoringPlugin implements IBoringPlugin {
   configure(table: BoringTable) {
     return {};
   }
+
+  onUpdateData() {}
   onMount() {
     return {};
   }
@@ -71,7 +100,7 @@ class BoringPlugin implements IBoringPlugin {
   afterCreate() {}
 }
 
-type CellBase<TCellValue> = { id: string; rawId: string; value: TCellValue };
+type CellBase<TCellValue> = { id: string; rawId: string; index: number; rowIndex: number; value: TCellValue };
 type Cell<TCellValue, TCellExtra extends Record<string, any>> = Simplify<
   CellBase<TCellValue> & Except<TCellExtra, keyof CellBase<TCellValue>>
 >;
@@ -128,26 +157,17 @@ class BoringTable<
   data: TData;
   columns: TColumn;
   getId: (arg: TData[number]) => string;
-  head: ExtractRow<TColumn, TPlugins, 'head', 'onCreateHeadCell', 'onCreateHeadRow'>[];
-  body: ExtractRow<TColumn, TPlugins, 'body', 'onCreateBodyCell', 'onCreateBodyRow'>[];
-  footer: ExtractRow<TColumn, TPlugins, 'footer', 'onCreateFooterCell', 'onCreateFooterRow'>[];
 
-  plugins: TPlugins = [] as unknown as TPlugins;
-  config: UnionToIntersection<ReturnType<TPlugins[number]['configure']>>;
-  events: Map<string, any> = new Map();
+  events: Map<keyof Events, any> = new Map();
   hasScheduledUpdate = false;
+
+  plugins: IBoringPlugin[] = [];
+  config: UnionToIntersection<ReturnType<TPlugins[number]['configure']>>;
   extensions: UnionToIntersection<ReturnType<TPlugins[number]['extend']>>;
 
-  dispatch(event: string, payload?: any) {
-    this.events.set(event, payload);
-    if (!this.hasScheduledUpdate) {
-      this.hasScheduledUpdate = true;
-      setTimeout(() => {
-        this.process();
-        this.hasScheduledUpdate = false;
-      }, 0);
-    }
-  }
+  head: ExtractRow<TColumn, TPlugins, 'head', 'onCreateHeadCell', 'onCreateHeadRow'>[] = [];
+  body: ExtractRow<TColumn, TPlugins, 'body', 'onCreateBodyCell', 'onCreateBodyRow'>[] = [];
+  footer: ExtractRow<TColumn, TPlugins, 'footer', 'onCreateFooterCell', 'onCreateFooterRow'>[] = [];
 
   constructor({
     data,
@@ -165,6 +185,59 @@ class BoringTable<
     this.getId = getId;
     if (plugins) this.plugins = plugins;
     this.configure();
+    this.dispatch('update:all');
+  }
+
+  compressEvents() {
+    const shouldUpdateAll = this.events.has('update:all');
+    const shouldUpdateData = this.events.has('update:data') || shouldUpdateAll;
+    const shouldUpdateRows = this.events.has('update:rows') || shouldUpdateAll;
+
+    const shouldUpdateHeadRows = this.events.has('update:head-rows') && !shouldUpdateRows;
+    const shouldUpdateHeadRow = this.events.has('update:head-row') && !shouldUpdateRows;
+    const shouldUpdateHeadCell = this.events.has('update:head-cell') && !shouldUpdateRows;
+
+    const shouldUpdateBodyRows = this.events.has('update:body-rows') && !shouldUpdateRows;
+    const shouldUpdateBodyRow = this.events.has('update:body-row') && !shouldUpdateRows;
+    const shouldUpdateBodyCell = this.events.has('update:body-cell') && !shouldUpdateRows;
+
+    const shouldUpdateFooterRows = this.events.has('update:footer-rows') && !shouldUpdateRows;
+    const shouldUpdateFooterRow = this.events.has('update:footer-row') && !shouldUpdateRows;
+    const shouldUpdateFooterCell = this.events.has('update:footer-cell') && !shouldUpdateRows;
+    return {
+      shouldUpdateAll,
+      shouldUpdateData,
+      shouldUpdateRows: shouldUpdateRows || (shouldUpdateHeadRows && shouldUpdateBodyRows && shouldUpdateFooterRows),
+      shouldUpdateHeadRows,
+      shouldUpdateBodyRows,
+      shouldUpdateFooterRows,
+      shouldUpdateHeadRow,
+      shouldUpdateHeadCell,
+      shouldUpdateBodyRow,
+      shouldUpdateBodyCell,
+      shouldUpdateFooterRow,
+      shouldUpdateFooterCell,
+    };
+  }
+
+  upsetEvent(event: keyof Events, payload?: Events[keyof Events]) {
+    if (this.events.has(event)) {
+      this.events.get(event).push(payload);
+      return;
+    }
+    this.events.set(event, [payload]);
+  }
+
+  dispatch<T extends keyof Events>(event: T, payload?: Events[T]) {
+    this.upsetEvent(event, payload);
+    if (!this.hasScheduledUpdate) {
+      this.hasScheduledUpdate = true;
+      setTimeout(() => {
+        this.process();
+        this.hasScheduledUpdate = false;
+        this.events.clear();
+      }, 0);
+    }
   }
 
   configure() {
@@ -172,16 +245,22 @@ class BoringTable<
     this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {});
   }
 
-  createCells(item: TData[number]) {
+  createCells(item: TData[number], rowIndex: number, from?: 'head' | 'body' | 'footer') {
     const rawId = this.getId(item);
     const { headCells, bodyCells, footerCells } = this.columns.reduce(
       (acc, column, index) => {
         const id = `cell-${index}-${rawId}`;
+        const baseCell = { id, rawId, index, rowIndex };
         const { headCellExtra, bodyCellExtra, footerCellExtra } = this.plugins.reduce(
           (acc, plugin) => {
-            const headCellExtra = plugin.onCreateHeadCell({ ...acc.headCellExtra, id, rawId });
-            const bodyCellExtra = plugin.onCreateBodyCell({ ...acc.bodyCellExtra, id, rawId });
-            const footerCellExtra = plugin.onCreateFooterCell({ ...acc.footerCellExtra, id, rawId });
+            const callAll = from === undefined;
+            const onCreateHeadCell = callAll || from === 'head' ? plugin.onCreateHeadCell.bind(plugin) : () => ({});
+            const onCreateBodyCell = callAll || from === 'body' ? plugin.onCreateBodyCell.bind(plugin) : () => ({});
+            const onCreateFooterCell =
+              callAll || from === 'footer' ? plugin.onCreateFooterCell.bind(plugin) : () => ({});
+            const headCellExtra = onCreateHeadCell({ ...acc.headCellExtra, ...baseCell });
+            const bodyCellExtra = onCreateBodyCell({ ...acc.bodyCellExtra, ...baseCell });
+            const footerCellExtra = onCreateFooterCell({ ...acc.footerCellExtra, ...baseCell });
             return {
               headCellExtra: { ...acc.headCellExtra, ...headCellExtra },
               bodyCellExtra: { ...acc.bodyCellExtra, ...bodyCellExtra },
@@ -190,10 +269,11 @@ class BoringTable<
           },
           { headCellExtra: {}, bodyCellExtra: {}, footerCellExtra: {} }
         );
-        const headCell = { id, rawId, value: column.head(item, { ...headCellExtra, id, rawId }, this) };
-        const bodyCell = { id, rawId, value: column.body(item, { ...bodyCellExtra, id, rawId }, this) };
+
+        const headCell = { ...baseCell, value: column.head(item, { ...headCellExtra, ...baseCell }, this) };
+        const bodyCell = { ...baseCell, value: column.body(item, { ...bodyCellExtra, ...baseCell }, this) };
         const footerCell = column?.footer
-          ? { id, rawId, value: column.footer(item, { ...footerCellExtra, id, rawId }, this) }
+          ? { ...baseCell, value: column.footer(item, { ...footerCellExtra, ...baseCell }, this) }
           : null;
         const headCells = [...acc.headCells, { ...headCell, ...headCellExtra }];
         const bodyCells = [...acc.bodyCells, { ...bodyCell, ...bodyCellExtra }];
@@ -206,8 +286,8 @@ class BoringTable<
     return { headCells, bodyCells, footerCells };
   }
 
-  createRow(item: TData[number], index: number) {
-    const { headCells, bodyCells, footerCells } = this.createCells(item);
+  createRow(item: TData[number], index: number, from?: 'head' | 'body' | 'footer') {
+    const { headCells, bodyCells, footerCells } = this.createCells(item, index);
     const rawId = this.getId(item);
     const id = `row-${index}-${rawId}`;
     const headRow = { id, rawId, index, cells: headCells };
@@ -215,9 +295,13 @@ class BoringTable<
     const footerRow = { id, rawId, index, cells: footerCells };
     const { headRowExtra, bodyRowExtra, footerRowExtra } = this.plugins.reduce(
       (acc, plugin) => {
-        const headRowExtra = plugin.onCreateHeadRow({ ...headRow, ...acc.headRowExtra });
-        const bodyRowExtra = plugin.onCreateBodyRow({ ...bodyRow, ...acc.bodyRowExtra });
-        const footerRowExtra = plugin.onCreateFooterRow({ ...footerRow, ...acc.footerRowExtra });
+        const callAll = from === undefined;
+        const onCreateHeadRow = callAll || from === 'head' ? plugin.onCreateHeadRow.bind(plugin) : () => ({});
+        const onCreateBodyRow = callAll || from === 'body' ? plugin.onCreateBodyRow.bind(plugin) : () => ({});
+        const onCreateFooterRow = callAll || from === 'footer' ? plugin.onCreateFooterRow.bind(plugin) : () => ({});
+        const headRowExtra = onCreateHeadRow({ ...headRow, ...acc.headRowExtra });
+        const bodyRowExtra = onCreateBodyRow({ ...bodyRow, ...acc.bodyRowExtra });
+        const footerRowExtra = onCreateFooterRow({ ...footerRow, ...acc.footerRowExtra });
         return {
           headRowExtra: { ...headRowExtra, ...acc.headRowExtra },
           bodyRowExtra: { ...bodyRowExtra, ...acc.bodyRowExtra },
@@ -229,10 +313,14 @@ class BoringTable<
     return { headRow, bodyRow, footerRow, headRowExtra, bodyRowExtra, footerRowExtra };
   }
 
-  createRows() {
+  createRows(from?: 'head' | 'body' | 'footer') {
     const rows = this.data.reduce(
       (acc, item, index) => {
-        const { headRow, bodyRow, footerRow, headRowExtra, bodyRowExtra, footerRowExtra } = this.createRow(item, index);
+        const { headRow, bodyRow, footerRow, headRowExtra, bodyRowExtra, footerRowExtra } = this.createRow(
+          item,
+          index,
+          from
+        );
         const headRows = [...acc.headRows, { ...headRow, ...headRowExtra }];
         const bodyRows = [...acc.bodyRows, { ...bodyRow, ...bodyRowExtra }];
         const footerRows = [...acc.footerRows];
@@ -244,14 +332,85 @@ class BoringTable<
     return rows;
   }
 
-  process() {
-    console.time('process');
-    this.plugins.forEach((plugin) => plugin.beforeCreate());
+  updateData() {
+    // this.plugins.forEach((plugin) => plugin.onUpdateData());
+  }
+  updateRows() {
     const rows = this.createRows();
-    this.plugins.forEach((plugin) => plugin.afterCreate());
     this.head = rows.headRows;
     this.body = rows.bodyRows;
     this.footer = rows.footerRows;
+  }
+  updateHeadRows() {
+    const rows = this.createRows('head');
+    this.head = rows.headRows;
+  }
+  updateBodyRows() {
+    const rows = this.createRows('body');
+    this.body = rows.bodyRows;
+  }
+  updateFooterRows() {
+    const rows = this.createRows('footer');
+    this.footer = rows.footerRows;
+  }
+
+  updateHeadRow() {
+    const eventDatas = this.events.get('update:head-row');
+    if (!eventDatas) return;
+    for (const eventData of eventDatas) {
+      const { position } = eventData;
+      const row = this.head[position];
+      if (!row) return;
+      const { headRow, headRowExtra } = this.createRow(this.data[row.index], row.index, 'head');
+      this.head[row.index] = { ...headRow, ...headRowExtra };
+    }
+  }
+  updateBodyRow() {
+    const eventDatas = this.events.get('update:body-row');
+    if (!eventDatas) return;
+    for (const eventData of eventDatas) {
+      const { position } = eventData;
+      const row = this.body[position];
+      if (!row) return;
+      const { bodyRow, bodyRowExtra } = this.createRow(this.data[row.index], row.index, 'body');
+      this.body[row.index] = { ...bodyRow, ...bodyRowExtra };
+    }
+  }
+  updateFooterRow() {
+    const eventDatas = this.events.get('update:footer-row');
+    if (!eventDatas) return;
+    for (const eventData of eventDatas) {
+      const { position } = eventData;
+      const row = this.footer[position];
+      if (!row) return;
+      const { footerRow, footerRowExtra } = this.createRow(this.data[row.index], row.index, 'footer');
+      this.footer[row.index] = { ...footerRow, ...footerRowExtra };
+    }
+  }
+
+  updateHeadCell() {}
+  updateBodyCell() {}
+  updateFooterCell() {}
+
+  process() {
+    console.time('process');
+    this.plugins.forEach((plugin) => plugin.beforeCreate());
+    const when = this.compressEvents();
+    if (when.shouldUpdateData) this.updateData();
+    if (when.shouldUpdateRows) this.updateRows();
+
+    if (!when.shouldUpdateRows && when.shouldUpdateHeadRows) this.updateHeadRows();
+    if (!when.shouldUpdateRows && when.shouldUpdateBodyRows) this.updateBodyRows();
+    if (!when.shouldUpdateRows && when.shouldUpdateFooterRows) this.updateFooterRows();
+
+    if (when.shouldUpdateHeadRow) this.updateHeadRow();
+    if (when.shouldUpdateBodyRow) this.updateBodyRow();
+    if (when.shouldUpdateFooterRow) this.updateFooterRow();
+
+    if (when.shouldUpdateHeadCell) this.updateHeadCell();
+    if (when.shouldUpdateBodyCell) this.updateBodyCell();
+    if (when.shouldUpdateFooterCell) this.updateFooterCell();
+    this.plugins.forEach((plugin) => plugin.afterCreate());
     console.timeEnd('process');
   }
 
@@ -273,16 +432,19 @@ class BoringTable<
   }
 }
 type GenericBoringTable = BoringTable<any, IBoringPlugin[], Column<any>[]>;
-class FilterPlugin extends BoringPlugin {
-  table: BoringTable<{ name: string }[]>;
+class FilterPlugin<T> extends BoringPlugin {
+  table: BoringTable<T[]>;
   param: string;
-  initialData: any[];
-  constructor() {
+  initialData: T[];
+  filteredData: T[];
+  userFilter: (param: string, value: T) => boolean;
+  constructor(filter: (param: string, value: T) => boolean) {
     super();
+    this.userFilter = filter;
   }
 
-  configure(arg: GenericBoringTable) {
-    this.table = arg;
+  configure(table: GenericBoringTable) {
+    this.table = table;
     this.initialData = [...this.table.data];
     return {};
   }
@@ -296,10 +458,12 @@ class FilterPlugin extends BoringPlugin {
 
   beforeCreate(): void {
     if (!this.param) {
+      this.filteredData = this.initialData;
       this.table.data = this.initialData;
       return;
     }
-    this.table.data = this.initialData.filter((item) => item.name.includes(this.param));
+    this.filteredData = this.initialData.filter((item) => this.userFilter(this.param, item));
+    this.table.data = this.filteredData;
   }
 
   extend() {
@@ -307,13 +471,13 @@ class FilterPlugin extends BoringPlugin {
   }
 }
 
-class HiddenPlugin extends BoringPlugin {
+class HiddenRowPlugin extends BoringPlugin {
   name = 'HiddenPlugin';
   values: Map<string, { hidden: boolean }> = new Map();
   table: BoringTable;
 
-  configure(arg: GenericBoringTable) {
-    this.table = arg;
+  configure(table: GenericBoringTable) {
+    this.table = table;
     return {};
   }
 
@@ -327,25 +491,37 @@ class HiddenPlugin extends BoringPlugin {
     this.values.set(id, { ...storedValue, hidden: !storedValue.hidden });
   };
 
+  private toggleHead = (position: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table.dispatch('update:head-row', { position });
+  };
+
+  private toggleBody = (position: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table.dispatch('update:body-row', { position });
+  };
+
+  private toggleFooter = (position: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table.dispatch('update:footer-row', { position });
+  };
+
   onCreateHeadRow(row: BoringTable['head'][number]) {
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { hidden: false });
     const hidden = this.values.get(row.rawId).hidden;
-    this.table.dispatch('update:head-row');
-    return { hidden, toggleHidden: (value?: boolean) => this.toggle(row.rawId, value) };
+    return { hidden, toggleHidden: (value?: boolean) => this.toggleHead(row.index, row.rawId, value) };
   }
 
   onCreateBodyRow(row: BoringTable['body'][number]) {
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { hidden: false });
     const hidden = this.values.get(row.rawId).hidden;
-    this.table.dispatch('update:body-row');
-    return { hidden, toggleHidden: (value?: boolean) => this.toggle(row.rawId, value) };
+    return { hidden, toggleHidden: (value?: boolean) => this.toggleBody(row.index, row.rawId, value) };
   }
 
   onCreateFooterRow(row: BoringTable['footer'][number]) {
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { hidden: false });
     const hidden = this.values.get(row.rawId).hidden;
-    this.table.dispatch('update:footer-row');
-    return { hidden, toggleHidden: (value?: boolean) => this.toggle(row.rawId, value) };
+    return { hidden, toggleHidden: (value?: boolean) => this.toggleFooter(row.index, row.rawId, value) };
   }
 }
 class CheckPlugin extends BoringPlugin {
@@ -353,8 +529,8 @@ class CheckPlugin extends BoringPlugin {
   values: Map<string, { check: boolean }> = new Map();
   table: BoringTable;
 
-  configure(arg: GenericBoringTable) {
-    this.table = arg;
+  configure(table: GenericBoringTable) {
+    this.table = table;
     return {};
   }
 
@@ -366,58 +542,64 @@ class CheckPlugin extends BoringPlugin {
     }
     const storedValue = this.values.get(id);
     this.values.set(id, { ...storedValue, check: !storedValue.check });
-    this.table.dispatch('update:head-row');
-    this.table.dispatch('update:body-row');
-    this.table.dispatch('update:footer-row');
+  };
+
+  private toggleHead = (position: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table.dispatch('update:head-row', { position });
+  };
+
+  private toggleBody = (position: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table.dispatch('update:body-row', { position });
+  };
+
+  private toggleFooter = (position: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table.dispatch('update:footer-row', { position });
   };
 
   onCreateHeadRow(row: BoringTable['head'][number]) {
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { check: false });
     const check = this.values.get(row.rawId).check;
-    this.table.dispatch('update:head-row');
-    return { check, toggleCheck: (value?: boolean) => this.toggle(row.rawId, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleHead(row.index, row.rawId, value) };
   }
-
-  onCreateHeadCell(cell: BoringTable['head'][number]['cell'][number]) {
-    if (!this.values.has(cell.rawId)) this.values.set(cell.rawId, { check: false });
-    const check = this.values.get(cell.rawId).check;
-    this.table.dispatch('update:head-cell');
-    return { check, toggleCheck: (value?: boolean) => this.toggle(cell.rawId, value) };
+  onCreateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {
+    const id = `cell-${cell.index}-${cell.rawId}`;
+    if (!this.values.has(id)) this.values.set(id, { check: false });
+    const check = this.values.get(id).check;
+    return { check, toggleCheck: (value?: boolean) => this.toggleHead(cell.rowIndex, id, value) };
   }
 
   onCreateBodyRow(row: BoringTable['body'][number]) {
+    // console.log('onCreateBodyRow', row);
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { check: false });
     const check = this.values.get(row.rawId).check;
-    this.table.dispatch('update:body-row');
-    return { check, toggleCheck: (value?: boolean) => this.toggle(row.rawId, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleBody(row.index, row.rawId, value) };
   }
-
-  onCreateBodyCell(cell: BoringTable['body'][number]['cell'][number]) {
-    const id = `cell-${cell.rawId}`;
+  onCreateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {
+    const id = `cell-${cell.index}-${cell.rawId}`;
+    // console.log('onCreateBodyCell', cell);
     if (!this.values.has(id)) this.values.set(id, { check: false });
     const check = this.values.get(id).check;
-    this.table.dispatch('update:body-cell');
-    return { check, toggleCheck: (value?: boolean) => this.toggle(id, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleBody(cell.rowIndex, id, value) };
   }
 
   onCreateFooterRow(row: BoringTable['footer'][number]) {
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { check: false });
     const check = this.values.get(row.rawId).check;
-    this.table.dispatch('update:footer-row');
-    return { check, toggleCheck: (value?: boolean) => this.toggle(row.rawId, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleFooter(row.index, row.rawId, value) };
   }
-  onCreateFooterCell(cell: BoringTable['footer'][number]['cell'][number]) {
-    if (!this.values.has(cell.rawId)) this.values.set(cell.rawId, { check: false });
-    const check = this.values.get(cell.rawId).check;
-    this.table.dispatch('update:footer-cell');
-    return { check, toggleCheck: (value?: boolean) => this.toggle(cell.rawId, value) };
+  onCreateFooterCell(cell: BoringTable['footer'][number]['cells'][number]) {
+    const id = `cell-${cell.index}-${cell.rawId}`;
+    if (!this.values.has(id)) this.values.set(id, { check: false });
+    const check = this.values.get(id).check;
+    return { check, toggleCheck: (value?: boolean) => this.toggleFooter(cell.rowIndex, id, value) };
   }
 
   onReset() {
     this.values = new Map();
-    this.table.dispatch('update:head-row');
-    this.table.dispatch('update:body-row');
-    this.table.dispatch('update:footer-row');
+    this.table.dispatch('update:rows');
     return {};
   }
 }
@@ -431,9 +613,9 @@ class ChangePlugin<T> extends BoringPlugin {
     this.change = this.change.bind(this);
   }
 
-  configure(arg: GenericBoringTable) {
-    this.table = arg;
-    this.initialData = [...arg.data];
+  configure(table: GenericBoringTable) {
+    this.table = table;
+    this.initialData = [...table.data];
     return {};
   }
 
@@ -468,11 +650,14 @@ class ChangePlugin<T> extends BoringPlugin {
   }
 }
 
+type Data = { id: string; name: string; age: number };
+const data: Data[] = [
+  { id: '1', name: 'John', age: 30 },
+  { id: '2', name: 'Mary', age: 20 },
+];
+
 const table = new BoringTable({
-  data: [
-    { id: '1', name: 'John', age: 30 },
-    { id: '2', name: 'Mary', age: 20 },
-  ],
+  data: data,
   getId: (arg) => arg.id,
   columns: [
     {
@@ -492,22 +677,28 @@ const table = new BoringTable({
   ],
 
   plugins: [
-    new FilterPlugin(),
-    new HiddenPlugin(),
+    new FilterPlugin<Data>((param, value) => value.name.includes(param)),
+    new HiddenRowPlugin(),
     new CheckPlugin(),
-    new ChangePlugin<{ id: string; name: string; age: number }>(),
+    new ChangePlugin<Data>(),
   ],
 });
 
-table.process();
 setTimeout(async () => {
-  console.log(JSON.stringify(table.body, null, 2));
-  await table.body[0].change((prev) => ({ ...prev, age: 27 }));
+  table.process();
+  // console.log('events', [...table.events.keys()]);
+  await table.waitForUpdates();
+  console.log('body', JSON.stringify(table.body, null, 2));
+  // await table.body[0].change((prev) => ({ ...prev, age: 27 }));
   // table.reset();
   // table.extensions.filter('o');
+  // table.body[0].toggleHidden();
+  // console.log('events', [...table.events.keys()]);
   table.body[0].cells[0].toggleCheck();
+  table.body[0].toggleCheck();
   await table.waitForUpdates();
-  console.log(JSON.stringify(table.body, null, 2));
+  // console.log('events', [...table.events.keys()]);
+  console.log('body', JSON.stringify(table.body, null, 2));
   // console.log('head', JSON.stringify(table.head, null, 2));
   // console.log('body', JSON.stringify(table.body, null, 2));
   // console.log('footer', JSON.stringify(table.footer, null, 2));
