@@ -1,5 +1,5 @@
 import type { Except, Simplify, UnionToIntersection } from 'type-fest';
-import { BoringPlugin, IBoringPlugin } from '../plugins/base';
+import { IBoringPlugin } from '../plugins/base';
 
 interface Events {
   'update:head-rows': void;
@@ -40,7 +40,7 @@ type Row<TCellValue, TCellExtra extends Record<string, any>, TRowExtra extends R
   RowBase<TCellValue, TCellExtra> & Except<TRowExtra, keyof RowBase<TCellValue, TCellExtra>>
 >;
 
-type Column<TValue extends any, TPlugins extends IBoringPlugin[] = BoringPlugin[]> = {
+type Column<TValue extends any, TPlugins extends IBoringPlugin[] = IBoringPlugin[]> = {
   type?: string;
   head: (
     arg: TValue,
@@ -107,7 +107,7 @@ export class BoringTable<
     this.data = data;
     this.columns = columns;
     this.getId = getId;
-    if (plugins) this.plugins = plugins;
+    if (plugins) this.plugins = plugins.sort((a, b) => b.priority - a.priority);
     this.configure();
     this.dispatch('update:all');
   }
@@ -318,7 +318,7 @@ export class BoringTable<
 
   process() {
     console.time('process');
-    this.plugins.forEach((plugin) => plugin.beforeCreate());
+    this.plugins.forEach((plugin) => plugin.beforeCreateRows(this.data));
     const when = this.compressEvents();
     if (when.shouldUpdateData) this.updateData();
     if (when.shouldUpdateRows) this.updateRows();
@@ -334,7 +334,7 @@ export class BoringTable<
     if (when.shouldUpdateHeadCell) this.updateHeadCell();
     if (when.shouldUpdateBodyCell) this.updateBodyCell();
     if (when.shouldUpdateFooterCell) this.updateFooterCell();
-    this.plugins.forEach((plugin) => plugin.afterCreate());
+    this.plugins.forEach((plugin) => plugin.afterCreateRows(this.data));
     console.timeEnd('process');
   }
 

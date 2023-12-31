@@ -2,12 +2,20 @@ import { BoringTable, GenericBoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class CheckPlugin extends BoringPlugin {
-  name = 'CheckPlugin';
+  get name() {
+    return 'check-plugin';
+  }
   values: Map<string, { check: boolean }> = new Map();
   table: BoringTable;
 
+  constructor() {
+    super();
+    this.debug('Plugin initialized');
+  }
+
   configure(table: GenericBoringTable) {
     this.table = table;
+    this.debug('Plugin configured');
     return {};
   }
 

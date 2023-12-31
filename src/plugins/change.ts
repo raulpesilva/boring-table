@@ -2,12 +2,21 @@ import type { BoringTable, GenericBoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class ChangePlugin<T> extends BoringPlugin {
+  get name() {
+    return 'change-plugin';
+  }
   table: BoringTable;
   initialData: T[];
+
+  constructor() {
+    super();
+    this.debug('Plugin initialized');
+  }
 
   configure(table: GenericBoringTable) {
     this.table = table;
     this.initialData = [...table.data];
+    this.debug('Plugin configured');
     return {};
   }
 

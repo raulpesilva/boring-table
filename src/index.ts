@@ -1,13 +1,16 @@
 import { BoringTable } from './core';
 import { ChangePlugin, CheckPlugin, FilterPlugin, HiddenRowPlugin } from './plugins';
+import { enableDebug } from './utils';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
 // _getDefaultColumnDef: usa o memo para evitar re-render desnecessário
 
+enableDebug(false);
+
 type Data = { id: string; name: string; age: number };
 const data: Data[] = [
   { id: '1', name: 'John', age: 30 },
-  { id: '2', name: 'Mary', age: 20 },
+  // { id: '2', name: 'Mary', age: 20 },
 ];
 
 const table = new BoringTable({
@@ -31,10 +34,10 @@ const table = new BoringTable({
   ],
 
   plugins: [
-    new FilterPlugin<Data>((param, value) => value.name.includes(param)),
     new HiddenRowPlugin(),
     new CheckPlugin(),
     new ChangePlugin<Data>(),
+    new FilterPlugin<Data>((param, value) => value.name.includes(param)),
   ],
 });
 
@@ -51,6 +54,7 @@ setTimeout(async () => {
   table.body[0].cells[0].toggleCheck();
   table.body[0].toggleCheck();
   await table.waitForUpdates();
+  // for (const a of table.body) console.table(a.cells);
   // console.log('events', [...table.events.keys()]);
   console.log('body', JSON.stringify(table.body, null, 2));
   // console.log('head', JSON.stringify(table.head, null, 2));

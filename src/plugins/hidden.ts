@@ -2,12 +2,20 @@ import { BoringTable, GenericBoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class HiddenRowPlugin extends BoringPlugin {
-  name = 'HiddenPlugin';
+  get name() {
+    return 'hidden-row-plugin';
+  }
   values: Map<string, { hidden: boolean }> = new Map();
   table: BoringTable;
 
+  constructor() {
+    super();
+    this.debug('Plugin initialized');
+  }
+
   configure(table: GenericBoringTable) {
     this.table = table;
+    this.debug('Plugin configured');
     return {};
   }
 
