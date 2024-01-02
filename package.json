@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "tsnd --ignore-watch node_modules src/index.ts",
     "dev:watch": "tsnd --respawn --ignore-watch node_modules src/index.ts",
-    "build": "tsc"
+    "clear:build": "rimraf ./dist",
+    "build": "npm run clear:build && tsc"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",
+    "rimraf": "^5.0.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"
   }

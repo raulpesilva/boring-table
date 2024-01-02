@@ -1,6 +1,41 @@
 import type { Except, Simplify, UnionToIntersection } from 'type-fest';
 import { IBoringPlugin } from '../plugins/base';
 
+// definir melhor os momentos e os eventos
+// para cada momento definir evento para antes e depois
+// e definir como trata-los
+
+const a = [
+  'update:rows',
+
+  'update:head-rows',
+  'update:head-row',
+  'update:head-cell',
+
+  'update:body-rows',
+  'update:body-row',
+  'update:body-cell',
+
+  'update:footer-rows',
+  'update:footer-row',
+  'update:footer-cell',
+
+  'update:data',
+  'update:data-item',
+
+  'update:columns',
+  'update:column',
+
+  'update:events',
+
+  'update:plugins',
+
+  'update:config',
+
+  'update:extensions',
+
+  'update:all',
+];
 interface Events {
   'update:head-rows': void;
   'update:head-row': any;
@@ -86,8 +121,8 @@ export class BoringTable<
   hasScheduledUpdate = false;
 
   plugins: IBoringPlugin[] = [];
-  config: UnionToIntersection<ReturnType<TPlugins[number]['configure']>>;
-  extensions: UnionToIntersection<ReturnType<TPlugins[number]['extend']>>;
+  config: UnionToIntersection<ReturnType<TPlugins[number]['configure']>> = {} as any;
+  extensions: UnionToIntersection<ReturnType<TPlugins[number]['extend']>> = {} as any;
 
   head: ExtractRow<TColumn, TPlugins, 'head', 'onCreateHeadCell', 'onCreateHeadRow'>[] = [];
   body: ExtractRow<TColumn, TPlugins, 'body', 'onCreateBodyCell', 'onCreateBodyRow'>[] = [];
@@ -165,14 +200,14 @@ export class BoringTable<
   }
 
   configure() {
-    this.config = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.configure(this) }), {});
-    this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {});
+    this.config = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.configure(this) }), {} as any);
+    this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {} as any);
   }
 
   createCells(item: TData[number], rowIndex: number, from?: 'head' | 'body' | 'footer') {
     const rawId = this.getId(item);
     const { headCells, bodyCells, footerCells } = this.columns.reduce(
-      (acc, column, index) => {
+      (acc: Record<string, any>, column, index) => {
         const id = `cell-${index}-${rawId}`;
         const baseCell = { id, rawId, index, rowIndex };
         const { headCellExtra, bodyCellExtra, footerCellExtra } = this.plugins.reduce(
@@ -194,10 +229,10 @@ export class BoringTable<
           { headCellExtra: {}, bodyCellExtra: {}, footerCellExtra: {} }
         );
 
-        const headCell = { ...baseCell, value: column.head(item, { ...headCellExtra, ...baseCell }, this) };
-        const bodyCell = { ...baseCell, value: column.body(item, { ...bodyCellExtra, ...baseCell }, this) };
+        const headCell = { ...baseCell, value: column.head(item, { ...headCellExtra, ...baseCell } as any, this) };
+        const bodyCell = { ...baseCell, value: column.body(item, { ...bodyCellExtra, ...baseCell } as any, this) };
         const footerCell = column?.footer
-          ? { ...baseCell, value: column.footer(item, { ...footerCellExtra, ...baseCell }, this) }
+          ? { ...baseCell, value: column.footer(item, { ...footerCellExtra, ...baseCell } as any, this) }
           : null;
         const headCells = [...acc.headCells, { ...headCell, ...headCellExtra }];
         const bodyCells = [...acc.bodyCells, { ...bodyCell, ...bodyCellExtra }];
@@ -286,7 +321,14 @@ export class BoringTable<
       const row = this.head[position];
       if (!row) return;
       const { headRow, headRowExtra } = this.createRow(this.data[row.index], row.index, 'head');
-      this.head[row.index] = { ...headRow, ...headRowExtra };
+      if (this.head[row.index])
+        this.head[row.index] = { ...headRow, ...headRowExtra } as ExtractRow<
+          TColumn,
+          TPlugins,
+          'head',
+          'onCreateFooterCell',
+          'onCreateFooterRow'
+        >;
     }
   }
   updateBodyRow() {
@@ -297,7 +339,14 @@ export class BoringTable<
       const row = this.body[position];
       if (!row) return;
       const { bodyRow, bodyRowExtra } = this.createRow(this.data[row.index], row.index, 'body');
-      this.body[row.index] = { ...bodyRow, ...bodyRowExtra };
+      if (this.body[row.index])
+        this.body[row.index] = { ...bodyRow, ...bodyRowExtra } as ExtractRow<
+          TColumn,
+          TPlugins,
+          'body',
+          'onCreateFooterCell',
+          'onCreateFooterRow'
+        >;
     }
   }
   updateFooterRow() {
@@ -308,7 +357,14 @@ export class BoringTable<
       const row = this.footer[position];
       if (!row) return;
       const { footerRow, footerRowExtra } = this.createRow(this.data[row.index], row.index, 'footer');
-      this.footer[row.index] = { ...footerRow, ...footerRowExtra };
+      if (this.footer[row.index])
+        this.footer[row.index] = { ...footerRow, ...footerRowExtra } as ExtractRow<
+          TColumn,
+          TPlugins,
+          'footer',
+          'onCreateFooterCell',
+          'onCreateFooterRow'
+        >;
     }
   }
 

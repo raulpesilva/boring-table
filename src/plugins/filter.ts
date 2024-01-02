@@ -6,10 +6,10 @@ export class FilterPlugin<T> extends BoringPlugin {
     return 'filter-plugin';
   }
   priority = 1;
-  table: BoringTable<T[]>;
-  param: string;
-  initialData: T[];
-  filteredData: T[];
+  table?: BoringTable<T[]>;
+  param: string = '';
+  initialData: T[] = [];
+  filteredData: T[] = [];
   userFilter: (param: string, value: T) => boolean;
 
   constructor(filter: (param: string, value: T) => boolean) {
@@ -27,17 +27,17 @@ export class FilterPlugin<T> extends BoringPlugin {
 
   filter = (value: string) => {
     this.param = value;
-    this.table.dispatch('update:data');
+    this.table?.dispatch('update:data');
   };
 
   beforeCreate(): void {
     if (!this.param) {
       this.filteredData = this.initialData;
-      this.table.data = this.initialData;
+      if (this.table) this.table.data = this.initialData;
       return;
     }
     this.filteredData = this.initialData.filter((item) => this.userFilter(this.param, item));
-    this.table.data = this.filteredData;
+    if (this.table) this.table.data = this.filteredData;
   }
 
   extend() {

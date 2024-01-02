@@ -5,8 +5,8 @@ export class ChangePlugin<T> extends BoringPlugin {
   get name() {
     return 'change-plugin';
   }
-  table: BoringTable;
-  initialData: T[];
+  table?: BoringTable;
+  initialData: T[] = [];
 
   constructor() {
     super();
@@ -21,8 +21,8 @@ export class ChangePlugin<T> extends BoringPlugin {
   }
 
   changeData(position: number, data: BoringTable['data'][number]) {
-    this.table.data[position] = data;
-    this.table.dispatch('update:data');
+    if (this.table) this.table.data[position] = data;
+    this.table?.dispatch('update:data');
   }
 
   unwrapData(data: T | ((prev: T) => T), prev: T) {
@@ -32,8 +32,8 @@ export class ChangePlugin<T> extends BoringPlugin {
 
   change = (row: BoringTable['body'][number]) => {
     return async (data: T | ((prev: T) => T)) => {
-      this.changeData(row.index, this.unwrapData(data, this.table.data[row.index]));
-      return await this.table.waitForUpdates();
+      this.changeData(row.index, this.unwrapData(data, this.table?.data[row.index]));
+      return await this.table?.waitForUpdates();
     };
   };
   onCreateBodyRow(row: BoringTable['body'][number]) {
@@ -41,8 +41,8 @@ export class ChangePlugin<T> extends BoringPlugin {
   }
 
   onReset() {
-    this.table.data = this.initialData;
-    this.table.dispatch('update:data');
+    if (this.table) this.table.data = this.initialData;
+    this.table?.dispatch('update:data');
     return {};
   }
 }

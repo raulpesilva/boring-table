@@ -1,17 +1,26 @@
 {
-  "module": "NodeNext",
-  "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules", "src/__mocks__/", "dist/**/*", "dist/test/**/*"],
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ESNext",
-    "outDir": "dist",
-    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "allowJs": true,
     "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "outDir": "dist",
+    "sourceMap": true,
+
     "declaration": true,
+
+    "composite": true,
     "declarationMap": true,
-    "emitDeclarationOnly": true,
-    "esModuleInterop": true
+
+    "lib": ["es2022"]
   }
 }

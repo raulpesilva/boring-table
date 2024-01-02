@@ -51,8 +51,8 @@ setTimeout(async () => {
   // table.extensions.filter('o');
   // table.body[0].toggleHidden();
   // console.log('events', [...table.events.keys()]);
-  table.body[0].cells[0].toggleCheck();
-  table.body[0].toggleCheck();
+  table.body[0]?.cells[0]?.toggleCheck();
+  table.body[0]?.toggleCheck();
   await table.waitForUpdates();
   // for (const a of table.body) console.table(a.cells);
   // console.log('events', [...table.events.keys()]);
