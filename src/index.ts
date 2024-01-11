@@ -10,7 +10,7 @@ enableDebug(false);
 type Data = { id: string; name: string; age: number };
 const data: Data[] = [
   { id: '1', name: 'John', age: 30 },
-  // { id: '2', name: 'Mary', age: 20 },
+  { id: '2', name: 'Mary', age: 20 },
 ];
 
 const table = new BoringTable({
