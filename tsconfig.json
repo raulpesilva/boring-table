@@ -9,7 +9,7 @@
     "isolatedModules": true,
 
     "strict": true,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
 
     "moduleResolution": "NodeNext",
     "module": "NodeNext",

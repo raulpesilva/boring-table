@@ -1,18 +1,19 @@
 import { BoringTable } from './core';
-import { ChangePlugin, CheckPlugin, HiddenRowPlugin } from './plugins';
+import { ChangePlugin, CheckPlugin, FilterPlugin, HiddenRowPlugin, SwapRowPlugin } from './plugins';
 import { enableDebug } from './utils';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
 // _getDefaultColumnDef: usa o memo para evitar re-render desnecessário
 
-enableDebug(false);
+enableDebug(true);
 
 type Data = { id: string; name: string; age: number };
 // const data: Data[] = [
 //   { id: '1', name: 'John', age: 30 },
 //   { id: '2', name: 'Mary', age: 20 },
 // ];
-const data: Data[] = Array.from({ length: 10000 }, (_, i) => ({
+
+const data: Data[] = Array.from({ length: 1_000_000 }, (_, i) => ({
   id: i.toString(),
   name: `Name ${i}`,
   age: i,
@@ -41,11 +42,10 @@ const table = new BoringTable({
     new HiddenRowPlugin(),
     new CheckPlugin(),
     new ChangePlugin<Data>(),
-    // new FilterPlugin<Data>((param, value) => value.name.includes(param)),
-    // new SwapRowPlugin(),
+    new FilterPlugin<Data>((param, value) => value.name.includes(param)),
+    new SwapRowPlugin(),
   ],
 });
-
 
 const run = async () => {
   // console.log('events', [...table.events.keys()]);
@@ -59,19 +59,22 @@ const run = async () => {
   // table.body[0]?.swap(1);
   // console.log('last body1', table.body[table.body.length - 1]);
 
-  table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
-  table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
-  table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
-  table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
-  table.body[table.body.length - 1]?.toggleCheck();
+  // table.body[table.body.length - 1]?.toggleCheck();
   // await table.waitForUpdates();
   // table.body[table.body.length - 1]?.toggleCheck();
   // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  table.body[table.body.length - 1]?.toggleCheck();
+  await table.waitForUpdates();
+
   // console.log(table.body[table.body.length - 1]?.cells[0]);
+  table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  await table.waitForUpdates();
   // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
   // await table.waitForUpdates();
   // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
@@ -82,11 +85,32 @@ const run = async () => {
   // await table.waitForUpdates();
   // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
   // await table.waitForUpdates();
-  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.onceUpdateFinish(() => console.log('finish'));
+  // table.dispatch('update:all');
+  // await table.waitForUpdates();
+  // table.dispatch('update:all');
+  // await table.waitForUpdates();
+  // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  // table.syncAwait()
   console.log('last body2', table.body[table.body.length - 1]);
+
+  await table.waitForUpdates();
+
+  console.time('time   ');
+  for (let i = 0; i < 1; i++) {
+    data.map((item) => [
+      table.plugins.map(() => table.columns.map((i) => item.name)),
+      table.plugins.map(() => table.columns.map((i) => item.name)),
+      table.plugins.map(() => table.columns.map((i) => item.name)),
+      table.plugins.map(() => table.columns.map((i) => item.name)),
+    ]);
+  }
+
+  console.timeEnd('time   ');
+
+  // console.log('last body2', table.body[table.body.length - 1]);
   // for (const a of table.body) console.table(a.cells);
   // console.log('events', [...table.events.keys()]);
   // console.log('body', JSON.stringify(table.body, null, 2));
