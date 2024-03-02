@@ -31,21 +31,21 @@ interface Events {
 
   'update:head-rows': void;
   'update:head-row': { position: number };
-  'update:head-cell': void;
+  'update:head-cell': { column: number; row: number };
 
   'update:body-rows': void;
   'update:body-row': { position: number };
-  'update:body-cell': void;
+  'update:body-cell': { column: number; row: number };
 
   'update:footer-rows': void;
   'update:footer-row': { position: number };
-  'update:footer-cell': void;
+  'update:footer-cell': { column: number; row: number };
 
   'update:data': void;
-  'update:data-item': void;
+  'update:data-item': { position: number };
 
   'update:columns': void;
-  'update:column': void;
+  'update:column': { position: number };
 
   'update:events': void;
 
@@ -69,6 +69,7 @@ type RowBase<TCellValue, TCellExtra extends Record<string, any>> = {
   index: number;
   cells: Cell<TCellValue, TCellExtra>[];
 };
+
 type Row<TCellValue, TCellExtra extends Record<string, any>, TRowExtra extends Record<string, any>> = Simplify<
   RowBase<TCellValue, TCellExtra> & Except<TRowExtra, keyof RowBase<TCellValue, TCellExtra>>
 >;
@@ -145,7 +146,7 @@ export class BoringTable<
     this.dispatch('update:all');
   }
 
-  compressEvents() {
+  private compressEvents() {
     const updateRows = this.events.has('update:rows');
 
     const updateHeadRows = this.events.has('update:head-rows');
@@ -229,40 +230,66 @@ export class BoringTable<
     this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {} as any);
   }
 
-  createCells(item: TData[number], rowIndex: number, from?: 'head' | 'body' | 'footer') {
+  createCell(
+    item: TData[number],
+    rowIndex: number,
+    column: TColumn[number],
+    index: number,
+    from?: 'head' | 'body' | 'footer'
+  ) {
     const rawId = this.getId(item);
+    const id = `cell-${index}-${rawId}`;
+    const baseCell = { id, rawId, index, rowIndex };
+
+    const { headCellExtra, bodyCellExtra, footerCellExtra } = this.plugins.reduce(
+      (acc, plugin) => {
+        const callAll = from === undefined;
+        const onCreateHeadCell = callAll || from === 'head' ? plugin.onCreateHeadCell.bind(plugin) : () => ({});
+        const onCreateBodyCell = callAll || from === 'body' ? plugin.onCreateBodyCell.bind(plugin) : () => ({});
+        const onCreateFooterCell = callAll || from === 'footer' ? plugin.onCreateFooterCell.bind(plugin) : () => ({});
+        const headCellExtra = onCreateHeadCell({ ...acc.headCellExtra, ...baseCell });
+        const bodyCellExtra = onCreateBodyCell({ ...acc.bodyCellExtra, ...baseCell });
+        const footerCellExtra = onCreateFooterCell({ ...acc.footerCellExtra, ...baseCell });
+        return {
+          headCellExtra: { ...acc.headCellExtra, ...headCellExtra },
+          bodyCellExtra: { ...acc.bodyCellExtra, ...bodyCellExtra },
+          footerCellExtra: { ...acc.footerCellExtra, ...footerCellExtra },
+        };
+      },
+      { headCellExtra: {}, bodyCellExtra: {}, footerCellExtra: {} }
+    );
+
+    let headCell = null;
+    if (column.head) {
+      const value = column.head(item, { ...headCellExtra, ...baseCell } as any, this);
+      headCell = { ...baseCell, value, ...headCellExtra };
+    }
+
+    let bodyCell = null;
+    if (column.body) {
+      const value = column.body(item, { ...bodyCellExtra, ...baseCell } as any, this);
+      bodyCell = { ...baseCell, value, ...bodyCellExtra };
+    }
+
+    let footerCell = null;
+    if (column.footer) {
+      const value = column.footer(item, { ...footerCellExtra, ...baseCell } as any, this);
+      footerCell = { ...baseCell, value, ...footerCellExtra };
+    }
+
+    return { headCell, bodyCell, footerCell };
+  }
+
+  createCells(item: TData[number], rowIndex: number, from?: 'head' | 'body' | 'footer') {
     const { headCells, bodyCells, footerCells } = this.columns.reduce(
       (acc: Record<string, any>, column, index) => {
-        const id = `cell-${index}-${rawId}`;
-        const baseCell = { id, rawId, index, rowIndex };
-        const { headCellExtra, bodyCellExtra, footerCellExtra } = this.plugins.reduce(
-          (acc, plugin) => {
-            const callAll = from === undefined;
-            const onCreateHeadCell = callAll || from === 'head' ? plugin.onCreateHeadCell.bind(plugin) : () => ({});
-            const onCreateBodyCell = callAll || from === 'body' ? plugin.onCreateBodyCell.bind(plugin) : () => ({});
-            const onCreateFooterCell =
-              callAll || from === 'footer' ? plugin.onCreateFooterCell.bind(plugin) : () => ({});
-            const headCellExtra = onCreateHeadCell({ ...acc.headCellExtra, ...baseCell });
-            const bodyCellExtra = onCreateBodyCell({ ...acc.bodyCellExtra, ...baseCell });
-            const footerCellExtra = onCreateFooterCell({ ...acc.footerCellExtra, ...baseCell });
-            return {
-              headCellExtra: { ...acc.headCellExtra, ...headCellExtra },
-              bodyCellExtra: { ...acc.bodyCellExtra, ...bodyCellExtra },
-              footerCellExtra: { ...acc.footerCellExtra, ...footerCellExtra },
-            };
-          },
-          { headCellExtra: {}, bodyCellExtra: {}, footerCellExtra: {} }
-        );
-
-        const headCell = { ...baseCell, value: column.head(item, { ...headCellExtra, ...baseCell } as any, this) };
-        const bodyCell = { ...baseCell, value: column.body(item, { ...bodyCellExtra, ...baseCell } as any, this) };
-        const footerCell = column?.footer
-          ? { ...baseCell, value: column.footer(item, { ...footerCellExtra, ...baseCell } as any, this) }
-          : null;
-        const headCells = [...acc.headCells, { ...headCell, ...headCellExtra }];
-        const bodyCells = [...acc.bodyCells, { ...bodyCell, ...bodyCellExtra }];
+        const { bodyCell, footerCell, headCell } = this.createCell(item, rowIndex, column, index, from);
+        const headCells = [...acc.headCells];
+        const bodyCells = [...acc.bodyCells];
         const footerCells = [...acc.footerCells];
-        if (footerCell) footerCells.push({ ...footerCell, ...footerCellExtra });
+        if (headCell) headCells.push(headCell);
+        if (bodyCell) bodyCells.push(bodyCell);
+        if (footerCell) footerCells.push(footerCell);
         return { headCells, bodyCells, footerCells };
       },
       { headCells: [], bodyCells: [], footerCells: [] }
@@ -271,7 +298,7 @@ export class BoringTable<
   }
 
   createRow(item: TData[number], index: number, from?: 'head' | 'body' | 'footer') {
-    const { headCells, bodyCells, footerCells } = this.createCells(item, index);
+    const { headCells, bodyCells, footerCells } = this.createCells(item, index, from);
     const rawId = this.getId(item);
     const id = `row-${index}-${rawId}`;
     const headRow = { id, rawId, index, cells: headCells };
@@ -319,20 +346,24 @@ export class BoringTable<
   updateData() {
     // this.plugins.forEach((plugin) => plugin.onUpdateData());
   }
+
   updateRows() {
     const rows = this.createRows();
     this.head = rows.headRows;
     this.body = rows.bodyRows;
     this.footer = rows.footerRows;
   }
+
   updateHeadRows() {
     const rows = this.createRows('head');
     this.head = rows.headRows;
   }
+
   updateBodyRows() {
     const rows = this.createRows('body');
     this.body = rows.bodyRows;
   }
+
   updateFooterRows() {
     const rows = this.createRows('footer');
     this.footer = rows.footerRows;
@@ -377,9 +408,47 @@ export class BoringTable<
     }
   }
 
-  updateHeadCell() {}
-  updateBodyCell() {}
-  updateFooterCell() {}
+  updateHeadCell() {
+    const eventDatas = this.events.get('update:head-cell');
+    if (!eventDatas) return;
+    for (const eventData of eventDatas) {
+      const column = this.columns[eventData.column];
+      if (!column) return;
+      const headRow = this.head[eventData.row];
+      if (!headRow) return;
+      if (!this.head[eventData.row]?.cells[eventData.column]) return;
+      const cells = this.createCell(this.data[eventData.row], eventData.row, column, eventData.column, 'head');
+      if (cells.headCell) headRow.cells[eventData.column] = cells.headCell;
+    }
+  }
+
+  updateBodyCell() {
+    const eventDatas = this.events.get('update:body-cell');
+    if (!eventDatas) return;
+    for (const eventData of eventDatas) {
+      const column = this.columns[eventData.column];
+      if (!column) return;
+      const bodyRow = this.body[eventData.row];
+      if (!bodyRow) return;
+      if (!this.body[eventData.row]?.cells[eventData.column]) return;
+      const cells = this.createCell(this.data[eventData.row], eventData.row, column, eventData.column, 'body');
+      if (cells.bodyCell) bodyRow.cells[eventData.column] = cells.bodyCell;
+    }
+  }
+
+  updateFooterCell() {
+    const eventDatas = this.events.get('update:footer-cell');
+    if (!eventDatas) return;
+    for (const eventData of eventDatas) {
+      const column = this.columns[eventData.column];
+      if (!column) return;
+      const footerRow = this.footer[eventData.row];
+      if (!footerRow) return;
+      if (!this.footer[eventData.row]?.cells[eventData.column]) return;
+      const cells = this.createCell(this.data[eventData.row], eventData.row, column, eventData.column, 'footer');
+      if (cells.footerCell) footerRow.cells[eventData.column] = cells.footerCell;
+    }
+  }
 
   process() {
     console.time('process');
@@ -401,6 +470,7 @@ export class BoringTable<
     if (when.updateFooterCell) this.updateFooterCell();
     this.plugins.forEach((plugin) => plugin.afterCreateRows(this.data));
     console.timeEnd('process');
+    this.events.clear();
   }
 
   reset() {
@@ -418,6 +488,12 @@ export class BoringTable<
         }
       }, 0);
     });
+  }
+
+  syncAwait() {
+    while (this.hasScheduledUpdate) {
+      // do nothing
+    }
   }
 }
 

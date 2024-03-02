@@ -1,5 +1,5 @@
 import { BoringTable } from './core';
-import { ChangePlugin, CheckPlugin, FilterPlugin, HiddenRowPlugin } from './plugins';
+import { ChangePlugin, CheckPlugin, HiddenRowPlugin } from './plugins';
 import { enableDebug } from './utils';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
@@ -8,11 +8,15 @@ import { enableDebug } from './utils';
 enableDebug(false);
 
 type Data = { id: string; name: string; age: number };
-const data: Data[] = [
-  { id: '1', name: 'John', age: 30 },
-  { id: '2', name: 'Mary', age: 20 },
-];
-
+// const data: Data[] = [
+//   { id: '1', name: 'John', age: 30 },
+//   { id: '2', name: 'Mary', age: 20 },
+// ];
+const data: Data[] = Array.from({ length: 10000 }, (_, i) => ({
+  id: i.toString(),
+  name: `Name ${i}`,
+  age: i,
+}));
 const table = new BoringTable({
   data: data,
   getId: (arg) => arg.id,
@@ -37,30 +41,60 @@ const table = new BoringTable({
     new HiddenRowPlugin(),
     new CheckPlugin(),
     new ChangePlugin<Data>(),
-    new FilterPlugin<Data>((param, value) => value.name.includes(param)),
+    // new FilterPlugin<Data>((param, value) => value.name.includes(param)),
+    // new SwapRowPlugin(),
   ],
 });
 
-setTimeout(async () => {
-  table.process();
+
+const run = async () => {
   // console.log('events', [...table.events.keys()]);
   await table.waitForUpdates();
-  console.log('body', JSON.stringify(table.body, null, 2));
+  // console.log('body', JSON.stringify(table.body, null, 2));
   // await table.body[0].change((prev) => ({ ...prev, age: 27 }));
   // table.reset();
   // table.extensions.filter('o');
   // table.body[0].toggleHidden();
   // console.log('events', [...table.events.keys()]);
-  table.body[0]?.cells[0]?.toggleCheck();
-  table.body[0]?.toggleCheck();
-  await table.waitForUpdates();
+  // table.body[0]?.swap(1);
+  // console.log('last body1', table.body[table.body.length - 1]);
+
+  table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // console.log(table.body[table.body.length - 1]?.cells[0]);
+  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
+  // await table.waitForUpdates();
+  // console.log(table.body[table.body.length - 1]?.cells[0]);
+  // table.syncAwait()
+  console.log('last body2', table.body[table.body.length - 1]);
   // for (const a of table.body) console.table(a.cells);
   // console.log('events', [...table.events.keys()]);
-  console.log('body', JSON.stringify(table.body, null, 2));
+  // console.log('body', JSON.stringify(table.body, null, 2));
   // console.log('head', JSON.stringify(table.head, null, 2));
   // console.log('body', JSON.stringify(table.body, null, 2));
   // console.log('footer', JSON.stringify(table.footer, null, 2));
-}, 1);
+};
+run();
 type Config = typeof table.config;
 //   ^?
 type Extensions = typeof table.extensions;

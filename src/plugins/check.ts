@@ -44,16 +44,32 @@ export class CheckPlugin extends BoringPlugin {
     this.table?.dispatch('update:footer-row', { position });
   };
 
+  private toggleHeadCell = (column: number, row: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table?.dispatch('update:head-cell', { column, row });
+  };
+
+  private toggleBodyCell = (column: number, row: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table?.dispatch('update:body-cell', { column, row });
+  };
+
+  private toggleFooterCell = (column: number, row: number, id: string, value?: boolean) => {
+    this.toggle(id, value);
+    this.table?.dispatch('update:footer-cell', { column, row });
+  };
+
   onCreateHeadRow(row: BoringTable['head'][number]) {
     if (!this.values.has(row.rawId)) this.values.set(row.rawId, { check: false });
     const check = this.values.get(row.rawId)?.check;
     return { check, toggleCheck: (value?: boolean) => this.toggleHead(row.index, row.rawId, value) };
   }
+
   onCreateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {
     const id = `cell-${cell.index}-${cell.rawId}`;
     if (!this.values.has(id)) this.values.set(id, { check: false });
     const check = this.values.get(id)?.check;
-    return { check, toggleCheck: (value?: boolean) => this.toggleHead(cell.rowIndex, id, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleHeadCell(cell.index, cell.rowIndex, id, value) };
   }
 
   onCreateBodyRow(row: BoringTable['body'][number]) {
@@ -62,12 +78,13 @@ export class CheckPlugin extends BoringPlugin {
     const check = this.values.get(row.rawId)?.check;
     return { check, toggleCheck: (value?: boolean) => this.toggleBody(row.index, row.rawId, value) };
   }
+
   onCreateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {
     const id = `cell-${cell.index}-${cell.rawId}`;
     // console.log('onCreateBodyCell', cell);
     if (!this.values.has(id)) this.values.set(id, { check: false });
     const check = this.values.get(id)?.check;
-    return { check, toggleCheck: (value?: boolean) => this.toggleBody(cell.rowIndex, id, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleBodyCell(cell.index, cell.rowIndex, id, value) };
   }
 
   onCreateFooterRow(row: BoringTable['footer'][number]) {
@@ -75,11 +92,12 @@ export class CheckPlugin extends BoringPlugin {
     const check = this.values.get(row.rawId)?.check;
     return { check, toggleCheck: (value?: boolean) => this.toggleFooter(row.index, row.rawId, value) };
   }
+
   onCreateFooterCell(cell: BoringTable['footer'][number]['cells'][number]) {
     const id = `cell-${cell.index}-${cell.rawId}`;
     if (!this.values.has(id)) this.values.set(id, { check: false });
     const check = this.values.get(id)?.check;
-    return { check, toggleCheck: (value?: boolean) => this.toggleFooter(cell.rowIndex, id, value) };
+    return { check, toggleCheck: (value?: boolean) => this.toggleFooterCell(cell.index, cell.rowIndex, id, value) };
   }
 
   onReset() {
