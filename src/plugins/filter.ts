@@ -1,5 +1,4 @@
 import { BoringTable, GenericBoringTable } from '../core';
-import { memo } from '../utils';
 import { BoringPlugin } from './base';
 
 export class FilterPlugin<T> extends BoringPlugin {
@@ -40,8 +39,6 @@ export class FilterPlugin<T> extends BoringPlugin {
     this.filteredData = this.initialData.filter((item) => this.userFilter(this.param, item));
     if (this.table) this.table.data = this.filteredData;
   };
-
-  _beforeCreate = memo(this.action, [this.param]);
 
   extend() {
     return { filter: this.filter };

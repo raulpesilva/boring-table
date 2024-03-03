@@ -1,5 +1,5 @@
 import { BoringTable } from './core';
-import { ChangePlugin, CheckPlugin, FilterPlugin, HiddenRowPlugin, SwapRowPlugin } from './plugins';
+import { ChangePlugin, CheckPlugin, FilterPlugin, HiddenRowPlugin, PaginationPlugin, SwapRowPlugin } from './plugins';
 import { enableDebug } from './utils';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
@@ -13,28 +13,33 @@ type Data = { id: string; name: string; age: number };
 //   { id: '2', name: 'Mary', age: 20 },
 // ];
 
-const data: Data[] = Array.from({ length: 1_000_000 }, (_, i) => ({
-  id: i.toString(),
+const data: Data[] = Array.from({ length: 2_000_000 }, (_, i) => ({
+  id: `id-${i.toString()}`,
   name: `Name ${i}`,
   age: i,
+  other: 'other',
+  other2: 'other2',
 }));
+
 const table = new BoringTable({
   data: data,
   getId: (arg) => arg.id,
   columns: [
     {
       type: 'name1',
-      head: (arg, e, t) => arg.id,
+      head: [(e, t) => false],
       body: (arg, e) => arg.id,
+      footer: (arg, e) => arg.id,
     },
     {
       type: 'name2',
-      head: (arg) => arg.name,
+      head: (arg) => 'head 1',
       body: (arg) => arg.name,
     },
     {
-      head: (arg) => arg.age,
+      head: () => 'head 2',
       body: (arg) => arg.age,
+      footer: [(e, t) => false],
     },
   ],
 
@@ -44,12 +49,14 @@ const table = new BoringTable({
     new ChangePlugin<Data>(),
     new FilterPlugin<Data>((param, value) => value.name.includes(param)),
     new SwapRowPlugin(),
+    new PaginationPlugin(1_000),
   ],
 });
 
 const run = async () => {
-  // console.log('events', [...table.events.keys()]);
   await table.waitForUpdates();
+  // console.log('events', [...table.events.keys()]);
+  // await table.waitForUpdates();
   // console.log('body', JSON.stringify(table.body, null, 2));
   // await table.body[0].change((prev) => ({ ...prev, age: 27 }));
   // table.reset();
@@ -69,12 +76,10 @@ const run = async () => {
   // await table.waitForUpdates();
   // table.body[table.body.length - 1]?.toggleCheck();
   // await table.waitForUpdates();
-  table.body[table.body.length - 1]?.toggleCheck();
-  await table.waitForUpdates();
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
 
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
-  await table.waitForUpdates();
   // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
   // await table.waitForUpdates();
   // table.body[table.body.length - 1]?.cells[0]?.toggleCheck();
@@ -94,21 +99,31 @@ const run = async () => {
   // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  console.log('last body2', table.body[table.body.length - 1]);
-
+  console.log('last body2', table.body[table.body.length - 1].check);
+  table.body[table.body.length - 1]?.toggleCheck();
   await table.waitForUpdates();
+  // console.log('last body2', table.body[table.body.length - 1]);
 
-  console.time('time   ');
-  for (let i = 0; i < 1; i++) {
-    data.map((item) => [
-      table.plugins.map(() => table.columns.map((i) => item.name)),
-      table.plugins.map(() => table.columns.map((i) => item.name)),
-      table.plugins.map(() => table.columns.map((i) => item.name)),
-      table.plugins.map(() => table.columns.map((i) => item.name)),
-    ]);
-  }
+  table.extensions.nextPage();
+  await table.waitForUpdates();
+  // table.dispatch('update:all');
+  // await table.waitForUpdates();
 
-  console.timeEnd('time   ');
+  console.log('last body2', table.body[table.body.length - 1].check);
+  console.log('head length   :', table.head.length);
+  console.log('body length   :', table.body.length);
+  console.log('footer length :', table.footer.length);
+  // table.extensions.resetCheck();
+  // await table.waitForUpdates();
+
+  // console.time('time   ');
+  // for (let i = 0; i < 1; i++) {
+  //   table.plugins.map((p) => p.name);
+  //   table.events.forEach((v, k) => k);
+  //   data.map((item) => [table.columns.map(() => [table.plugins.map((p) => p.name)]), table.plugins.map((p) => p.name)]);
+  //   table.plugins.map((p) => p.name);
+  // }
+  // console.timeEnd('time   ');
 
   // console.log('last body2', table.body[table.body.length - 1]);
   // for (const a of table.body) console.table(a.cells);
@@ -129,3 +144,16 @@ type BodyType = typeof table.body;
 //   ^?
 type FooterType = typeof table.footer;
 //   ^?
+type HeadValue = HeadType[number]['cells'][number]['value'];
+//   ^?
+type BodyValue = BodyType[number]['cells'][number]['value'];
+//   ^?
+type FooterValue = FooterType[number]['cells'][number]['value'];
+//   ^?
+
+type ColumnsType = typeof table.columns;
+// type column = (ColumnsType extends (infer T)[] ? (T extends { head: any } ? T : never) : never)['head'];
+type argA<T extends keyof ColumnsType[number]> = ColumnsType extends (infer R)[] ? R : never;
+
+type a = (() => 'a') | [() => 2] | [() => 1];
+type b = Extract<a, Function> | Extract<a, any[]>[number];

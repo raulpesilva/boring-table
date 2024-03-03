@@ -8,6 +8,9 @@ const doNothing = () => ({});
 // para cada momento definir evento para antes e depois
 // e definir como trata-los
 
+// TODO: criar header apenas passando pelas colunas
+// hj ele passa por todas as linhas
+
 const defaultUpdates = {
   updateRows: false,
   updateHeadRows: false,
@@ -29,8 +32,19 @@ const defaultUpdates = {
   updateExtensions: false,
   updateAll: false,
 };
-interface Events {
+interface UpdateEvents {
+  'update:plugins': void;
+  'update:config': void;
+  'update:extensions': void;
+  'update:all': void;
   'update:rows': void;
+  'update:events': void;
+
+  'update:data': void;
+  'update:data-item': { position: number };
+
+  'update:columns': void;
+  'update:column': { position: number };
 
   'update:head-rows': void;
   'update:head-row': { position: number };
@@ -43,22 +57,6 @@ interface Events {
   'update:footer-rows': void;
   'update:footer-row': { position: number };
   'update:footer-cell': { column: number; row: number };
-
-  'update:data': void;
-  'update:data-item': { position: number };
-
-  'update:columns': void;
-  'update:column': { position: number };
-
-  'update:events': void;
-
-  'update:plugins': void;
-
-  'update:config': void;
-
-  'update:extensions': void;
-
-  'update:all': void;
 }
 
 type CellBase<TCellValue> = { id: string; rawId: string; index: number; rowIndex: number; value: TCellValue };
@@ -77,36 +75,52 @@ type Row<TCellValue, TCellExtra extends Record<string, any>, TRowExtra extends R
   RowBase<TCellValue, TCellExtra> & Except<TRowExtra, keyof RowBase<TCellValue, TCellExtra>>
 >;
 
-type Column<TValue extends any, TPlugins extends IBoringPlugin[] = IBoringPlugin[]> = {
+type Column<TValue extends any[], TPlugins extends IBoringPlugin[] = IBoringPlugin[]> = {
   type?: string;
-  head: (
-    arg: TValue,
-    extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateHeadCell']>> & { id: string }>,
-    table: BoringTable<TValue[], TPlugins>
-  ) => any;
+  head:
+    | ((
+        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateHeadCell']>> & { id: string }>,
+        table: BoringTable<TValue, TPlugins>
+      ) => any)
+    | ((
+        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateHeadCell']>> & { id: string }>,
+        table: BoringTable<TValue, TPlugins>
+      ) => any)[];
   body: (
     arg: TValue,
     extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateBodyCell']>> & { id: string }>,
-    table: BoringTable<TValue[], TPlugins>
+    table: BoringTable<TValue, TPlugins>
   ) => any;
-  footer?: (
-    arg: TValue,
-    extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateFooterCell']>> & { id: string }>,
-    table: BoringTable<TValue[], TPlugins>
-  ) => any;
+  footer?:
+    | ((
+        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateFooterCell']>> & { id: string }>,
+        table: BoringTable<TValue, TPlugins>
+      ) => any)
+    | ((
+        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateFooterCell']>> & { id: string }>,
+        table: BoringTable<TValue, TPlugins>
+      ) => any)[];
 };
+
+type ExtractColumn<
+  TColumn extends Record<string, any>[],
+  key extends keyof TColumn[number]
+> = TColumn extends (infer T)[] ? (T extends Record<key, any> ? T : never) : never;
 
 type ExtractRow<
   TColumn extends Record<string, any>[],
   TPlugins extends Record<string, any>[],
-  K1 extends keyof TColumn[number],
-  K2 extends keyof TPlugins[number],
-  K3 extends keyof TPlugins[number]
+  KColumns extends keyof TColumn[number],
+  KCell extends keyof TPlugins[number],
+  KRow extends keyof TPlugins[number]
 > = Simplify<
   Row<
-    ReturnType<TColumn[number][K1]>,
-    UnionToIntersection<ReturnType<TPlugins[number][K2]>>,
-    UnionToIntersection<ReturnType<TPlugins[number][K3]>>
+    ReturnType<
+      | Extract<ExtractColumn<TColumn, KColumns>[KColumns], Function>
+      | Extract<ExtractColumn<TColumn, KColumns>[KColumns], Function[]>[number]
+    >,
+    UnionToIntersection<ReturnType<TPlugins[number][KCell]>>,
+    UnionToIntersection<ReturnType<TPlugins[number][KRow]>>
   >
 >;
 
@@ -120,7 +134,7 @@ export class BoringTable<
   columns: TColumn;
   getId: (arg: TData[number]) => string;
 
-  events: MapEvents<Events> = new Map();
+  events: MapEvents<UpdateEvents> = new Map();
   hasScheduledUpdate = false;
 
   plugins: IBoringPlugin[] = [];
@@ -209,7 +223,7 @@ export class BoringTable<
     };
   }
 
-  upsetEvent<T extends keyof Events>(event: T, payload?: Events[T]) {
+  upsetEvent<T extends keyof UpdateEvents>(event: T, payload?: UpdateEvents[T]) {
     if (this.events.has(event)) {
       this.events.get(event)?.push(payload);
       return;
@@ -217,7 +231,7 @@ export class BoringTable<
     this.events.set(event, [payload]);
   }
 
-  dispatch<T extends keyof Events>(event: T, payload?: Events[T]) {
+  dispatch<T extends keyof UpdateEvents>(event: T, payload?: UpdateEvents[T]) {
     this.upsetEvent(event, payload);
     if (!this.hasScheduledUpdate) {
       this.hasScheduledUpdate = true;
@@ -234,216 +248,101 @@ export class BoringTable<
     this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {} as any);
   }
 
-  createCell(
-    item: TData[number],
-    rowIndex: number,
-    column: TColumn[number],
-    index: number,
-    from?: 'head' | 'body' | 'footer'
-  ) {
+  createBodyCell(item: TData[number], rowIndex: number, column: TColumn[number], index: number) {
     const rawId = this.getId(item);
     const id = `cell-${index}-${rawId}`;
     const baseCell = { id, rawId, index, rowIndex, value: undefined };
-    const headCell = { ...baseCell };
-    const bodyCell = { ...baseCell };
-    const footerCell = { ...baseCell };
-    const callAll = from === undefined;
-    const shouldCallOnCreateHeadCell = (from === 'head' || callAll) && column.head;
-    const shouldCallOnCreateBodyCell = (from === 'body' || callAll) && column.body;
-    const shouldCallOnCreateFooterCell = (from === 'footer' || callAll) && column.footer;
+    const cell = { ...baseCell };
 
-    this.plugins.forEach((plugin) => {
-      const onCreateHeadCell = shouldCallOnCreateHeadCell ? plugin.onCreateHeadCell.bind(plugin) : () => ({});
-      const onCreateBodyCell = shouldCallOnCreateBodyCell ? plugin.onCreateBodyCell.bind(plugin) : () => ({});
-      const onCreateFooterCell = shouldCallOnCreateFooterCell ? plugin.onCreateFooterCell.bind(plugin) : () => ({});
-      const headCellExtra = onCreateHeadCell(headCell);
-      const bodyCellExtra = onCreateBodyCell(bodyCell);
-      const footerCellExtra = onCreateFooterCell(footerCell);
-      Object.assign(headCell, headCellExtra);
-      Object.assign(bodyCell, bodyCellExtra);
-      Object.assign(footerCell, footerCellExtra);
-    });
+    for (let i = 0; i < this.plugins.length; i++) {
+      const plugin = this.plugins[i];
+      if (!!column.body) Object.assign(cell, plugin.onCreateBodyCell.bind(plugin)(cell));
+    }
 
-    if (column.head) headCell.value = column.head(item, headCell as any, this);
-    if (column.body) bodyCell.value = column.body(item, bodyCell as any, this);
-    if (column.footer) footerCell.value = column.footer(item, footerCell as any, this);
+    type value = (typeof this.body)[number]['cells'][number]['value'];
+    if (column.body) cell.value = column.body(item, cell as any, this);
 
-    return { headCell, bodyCell, footerCell };
+    return cell;
   }
 
-  createCells(item: TData[number], rowIndex: number, from?: 'head' | 'body' | 'footer') {
-    const headCells: any[] = [];
-    const bodyCells: any[] = [];
-    const footerCells: any[] = [];
-    this.columns.forEach((column, index) => {
-      const { bodyCell, footerCell, headCell } = this.createCell(item, rowIndex, column, index, from);
-      if (headCell) headCells.push(headCell);
-      if (bodyCell) bodyCells.push(bodyCell);
-      if (footerCell) footerCells.push(footerCell);
-    });
-    return { headCells, bodyCells, footerCells };
+  createBodyCells(item: TData[number], rowIndex: number) {
+    type Cells = (typeof this.body)[number]['cells'];
+    const cells: Cells = [];
+    for (let index = 0; index < this.columns.length; index++) {
+      const column = this.columns[index];
+      const cell = this.createBodyCell(item, rowIndex, column, index);
+      cells.push(cell);
+    }
+    return cells;
   }
 
-  createRow(item: TData[number], index: number, from?: 'head' | 'body' | 'footer') {
-    const { headCells, bodyCells, footerCells } = this.createCells(item, index, from);
+  createBodyRow(item: TData[number], index: number) {
+    const cells = this.createBodyCells(item, index);
     const rawId = this.getId(item);
     const id = `row-${index}-${rawId}`;
-    const headRow = { id, rawId, index, cells: headCells };
-    const bodyRow = { id, rawId, index, cells: bodyCells };
-    const footerRow = { id, rawId, index, cells: footerCells };
-    const callAll = from === undefined;
-    const shouldCallOnCreateHeadRow = (callAll || from === 'head') && headRow.cells.length > 0;
-    const shouldCallOnCreateBodyRow = (callAll || from === 'body') && bodyRow.cells.length > 0;
-    const shouldCallOnCreateFooterRow = (callAll || from === 'footer') && footerRow.cells.length > 0;
+    type Row = (typeof this.body)[number];
+    const row = { id, rawId, index, cells } as Row;
 
-    this.plugins.forEach((plugin) => {
-      const onCreateHeadRow = shouldCallOnCreateHeadRow ? plugin.onCreateHeadRow.bind(plugin) : doNothing;
-      const onCreateBodyRow = shouldCallOnCreateBodyRow ? plugin.onCreateBodyRow.bind(plugin) : doNothing;
-      const onCreateFooterRow = shouldCallOnCreateFooterRow ? plugin.onCreateFooterRow.bind(plugin) : doNothing;
-      const headRowExtra = onCreateHeadRow(headRow);
-      const bodyRowExtra = onCreateBodyRow(bodyRow);
-      const footerRowExtra = onCreateFooterRow(footerRow);
-      Object.assign(headRow, headRowExtra);
-      Object.assign(bodyRow, bodyRowExtra);
-      Object.assign(footerRow, footerRowExtra);
-    });
-    return { headRow, bodyRow, footerRow };
-  }
-
-  createRows(from?: 'head' | 'body' | 'footer') {
-    const headRows: typeof this.head = [];
-    const bodyRows: typeof this.body = [];
-    const footerRows: typeof this.footer = [];
-    this.data.forEach((item, index) => {
-      const { headRow, bodyRow, footerRow } = this.createRow(item, index, from);
-      headRows.push(headRow as (typeof this.head)[number]);
-      bodyRows.push(bodyRow as (typeof this.body)[number]);
-      footerRows.push(footerRow as (typeof this.footer)[number]);
-    });
-    return { headRows, bodyRows, footerRows };
-  }
-
-  updateData() {
-    const eventDatas = this.events.get('update:data-item') as Events['update:data-item'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const { position } = eventData;
-      const item = this.data[position];
-      this.dispatch('update:head-row', { position });
-      this.dispatch('update:body-row', { position });
-      this.dispatch('update:footer-row', { position });
-      // terminar
+    for (let i = 0; i < this.plugins.length; i++) {
+      const plugin = this.plugins[i];
+      if (row.cells.length > 0) Object.assign(row, plugin.onCreateBodyRow.bind(plugin)(row));
     }
-    this.plugins.forEach((plugin) => plugin.onChangeData(this.data));
+
+    return row;
   }
 
+  createBodyRows() {
+    this.plugins.forEach((plugin) => plugin.beforeCreateBodyRows(this.data));
+    const rows: typeof this.body = [];
+    for (let index = 0; index < this.data.length; index++) {
+      const item = this.data[index];
+      const row = this.createBodyRow(item, index);
+      if (row) rows.push(row);
+    }
+    this.plugins.forEach((plugin) => plugin.afterCreateBodyRows(this.data));
+
+    return rows;
+  }
+
+  createHeadCell() {}
+  createHeadCells() {}
+  createHeadRow() {}
+  createHeadRows() {
+    this.plugins.forEach((plugin) => plugin.beforeCreateHeadRows(this.data));
+    // implementation
+    this.plugins.forEach((plugin) => plugin.afterCreateHeadRows(this.data));
+  }
+
+  createFooterCell() {}
+  createFooterCells() {}
+  createFooterRow() {}
+  createFooterRows() {
+    this.plugins.forEach((plugin) => plugin.beforeCreateFooterRows(this.data));
+    // implementation
+    this.plugins.forEach((plugin) => plugin.afterCreateFooterRows(this.data));
+  }
+
+  updateData() {}
   updateRows() {
-    const rows = this.createRows();
-    this.head = rows.headRows;
-    this.body = rows.bodyRows;
-    this.footer = rows.footerRows;
+    this.body = this.createBodyRows();
   }
 
-  updateHeadRows() {
-    const rows = this.createRows('head');
-    this.head = rows.headRows;
-  }
+  updateHeadRows() {}
+  updateBodyRows() {}
+  updateFooterRows() {}
 
-  updateBodyRows() {
-    const rows = this.createRows('body');
-    this.body = rows.bodyRows;
-  }
+  updateHeadRow() {}
+  updateBodyRow() {}
+  updateFooterRow() {}
 
-  updateFooterRows() {
-    const rows = this.createRows('footer');
-    this.footer = rows.footerRows;
-  }
-
-  updateHeadRow() {
-    const eventDatas = this.events.get('update:head-row') as Events['update:head-row'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const { position } = eventData;
-      const row = this.head[position];
-      if (!row) return;
-      const { headRow } = this.createRow(this.data[row.index], row.index, 'head');
-      type Row = ExtractRow<TColumn, TPlugins, 'head', 'onCreateFooterCell', 'onCreateFooterRow'>;
-      if (this.head[row.index]) this.head[row.index] = headRow as Row;
-    }
-  }
-
-  updateBodyRow() {
-    const eventDatas = this.events.get('update:body-row') as Events['update:body-row'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const { position } = eventData;
-      const row = this.body[position];
-      if (!row) return;
-      const { bodyRow } = this.createRow(this.data[row.index], row.index, 'body');
-      type Row = ExtractRow<TColumn, TPlugins, 'body', 'onCreateFooterCell', 'onCreateFooterRow'>;
-      if (this.body[row.index]) this.body[row.index] = bodyRow as Row;
-    }
-  }
-
-  updateFooterRow() {
-    const eventDatas = this.events.get('update:footer-row') as Events['update:footer-row'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const { position } = eventData;
-      const row = this.footer[position];
-      if (!row) return;
-      const { footerRow } = this.createRow(this.data[row.index], row.index, 'footer');
-      type Row = ExtractRow<TColumn, TPlugins, 'footer', 'onCreateFooterCell', 'onCreateFooterRow'>;
-      if (this.footer[row.index]) this.footer[row.index] = footerRow as Row;
-    }
-  }
-
-  updateHeadCell() {
-    const eventDatas = this.events.get('update:head-cell') as Events['update:head-cell'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const column = this.columns[eventData.column];
-      if (!column) return;
-      const headRow = this.head[eventData.row];
-      if (!headRow) return;
-      if (!this.head[eventData.row]?.cells[eventData.column]) return;
-      const cells = this.createCell(this.data[eventData.row], eventData.row, column, eventData.column, 'head');
-      if (cells.headCell) headRow.cells[eventData.column] = cells.headCell;
-    }
-  }
-
-  updateBodyCell() {
-    const eventDatas = this.events.get('update:body-cell') as Events['update:body-cell'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const column = this.columns[eventData.column];
-      if (!column) return;
-      const bodyRow = this.body[eventData.row];
-      if (!bodyRow) return;
-      if (!this.body[eventData.row]?.cells[eventData.column]) return;
-      const cells = this.createCell(this.data[eventData.row], eventData.row, column, eventData.column, 'body');
-      if (cells.bodyCell) bodyRow.cells[eventData.column] = cells.bodyCell;
-    }
-  }
-
-  updateFooterCell() {
-    const eventDatas = this.events.get('update:footer-cell') as Events['update:footer-cell'][] | undefined;
-    if (!eventDatas) return;
-    for (const eventData of eventDatas) {
-      const column = this.columns[eventData.column];
-      if (!column) return;
-      const footerRow = this.footer[eventData.row];
-      if (!footerRow) return;
-      if (!this.footer[eventData.row]?.cells[eventData.column]) return;
-      const cells = this.createCell(this.data[eventData.row], eventData.row, column, eventData.column, 'footer');
-      if (cells.footerCell) footerRow.cells[eventData.column] = cells.footerCell;
-    }
-  }
+  updateHeadCell() {}
+  updateBodyCell() {}
+  updateFooterCell() {}
 
   process() {
     console.time('process');
-    this.plugins.forEach((plugin) => plugin.beforeCreateRows(this.data));
     const when = this.compressEvents();
+    console.log(Object.fromEntries(Object.entries(when).filter(([, v]) => v)));
     if (when.updateAll || when.updateData) this.updateData();
     if (when.updateAll || when.updateRows) this.updateRows();
 
@@ -458,13 +357,12 @@ export class BoringTable<
     if (when.updateHeadCell) this.updateHeadCell();
     if (when.updateBodyCell) this.updateBodyCell();
     if (when.updateFooterCell) this.updateFooterCell();
-    this.plugins.forEach((plugin) => plugin.afterCreateRows(this.data));
     console.timeEnd('process');
     this.events.clear();
   }
 
   reset() {
-    this.events = new Map();
+    this.events.clear();
     this.plugins.forEach((plugin) => plugin.onReset());
     this.process();
   }
@@ -484,107 +382,3 @@ export class BoringTable<
 }
 
 export type GenericBoringTable = BoringTable<any, IBoringPlugin[], Column<any>[]>;
-
-
-// createCell(
-//   item: TData[number],
-//   rowIndex: number,
-//   column: TColumn[number],
-//   index: number,
-//   from?: 'head' | 'body' | 'footer'
-// ) {
-//   const rawId = this.getId(item);
-//   const id = `cell-${index}-${rawId}`;
-//   const baseCell = { id, rawId, index, rowIndex };
-//   const callAll = from === undefined;
-//   const shouldCallOnCreateHeadCell = (from === 'head' || callAll) && column.head;
-//   const shouldCallOnCreateBodyCell = (from === 'body' || callAll) && column.body;
-//   const shouldCallOnCreateFooterCell = (from === 'footer' || callAll) && column.footer;
-
-//   const { headCellExtra, bodyCellExtra, footerCellExtra } = this.plugins.reduce(
-//     (acc, plugin) => {
-//       const onCreateHeadCell = shouldCallOnCreateHeadCell ? plugin.onCreateHeadCell.bind(plugin) : () => ({});
-//       const onCreateBodyCell = shouldCallOnCreateBodyCell ? plugin.onCreateBodyCell.bind(plugin) : () => ({});
-//       const onCreateFooterCell = shouldCallOnCreateFooterCell ? plugin.onCreateFooterCell.bind(plugin) : () => ({});
-//       const headCellExtra = onCreateHeadCell({ ...acc.headCellExtra, ...baseCell });
-//       const bodyCellExtra = onCreateBodyCell({ ...acc.bodyCellExtra, ...baseCell });
-//       const footerCellExtra = onCreateFooterCell({ ...acc.footerCellExtra, ...baseCell });
-//       return {
-//         headCellExtra: { ...acc.headCellExtra, ...headCellExtra },
-//         bodyCellExtra: { ...acc.bodyCellExtra, ...bodyCellExtra },
-//         footerCellExtra: { ...acc.footerCellExtra, ...footerCellExtra },
-//       };
-//     },
-//     { headCellExtra: {}, bodyCellExtra: {}, footerCellExtra: {} }
-//   );
-
-//   let headCell = null;
-//   if (column.head) {
-//     const value = column.head(item, { ...headCellExtra, ...baseCell } as any, this);
-//     headCell = { ...headCellExtra, ...baseCell, value };
-//   }
-
-//   let bodyCell = null;
-//   if (column.body) {
-//     const value = column.body(item, { ...bodyCellExtra, ...baseCell } as any, this);
-//     bodyCell = { ...bodyCellExtra, ...baseCell, value };
-//   }
-
-//   let footerCell = null;
-//   if (column.footer) {
-//     const value = column.footer(item, { ...footerCellExtra, ...baseCell } as any, this);
-//     footerCell = { ...footerCellExtra, ...baseCell, value };
-//   }
-
-//   return { headCell, bodyCell, footerCell };
-// }
-
-// createRow(item: TData[number], index: number, from?: 'head' | 'body' | 'footer') {
-//   const { headCells, bodyCells, footerCells } = this.createCells(item, index, from);
-//   const rawId = this.getId(item);
-//   const id = `row-${index}-${rawId}`;
-//   const headRow = { id, rawId, index, cells: headCells };
-//   const bodyRow = { id, rawId, index, cells: bodyCells };
-//   const footerRow = { id, rawId, index, cells: footerCells };
-//   const callAll = from === undefined;
-//   const shouldCallOnCreateHeadRow = (callAll || from === 'head') && headRow.cells.length > 0;
-//   const shouldCallOnCreateBodyRow = (callAll || from === 'body') && bodyRow.cells.length > 0;
-//   const shouldCallOnCreateFooterRow = (callAll || from === 'footer') && footerRow.cells.length > 0;
-
-//   const { headRowExtra, bodyRowExtra, footerRowExtra } = this.plugins.reduce(
-//     (acc, plugin) => {
-//       const onCreateHeadRow = shouldCallOnCreateHeadRow ? plugin.onCreateHeadRow.bind(plugin) : doNothing;
-//       const onCreateBodyRow = shouldCallOnCreateBodyRow ? plugin.onCreateBodyRow.bind(plugin) : doNothing;
-//       const onCreateFooterRow = shouldCallOnCreateFooterRow ? plugin.onCreateFooterRow.bind(plugin) : doNothing;
-//       const headRowExtra = onCreateHeadRow({ ...headRow, ...acc.headRowExtra });
-//       const bodyRowExtra = onCreateBodyRow({ ...bodyRow, ...acc.bodyRowExtra });
-//       const footerRowExtra = onCreateFooterRow({ ...footerRow, ...acc.footerRowExtra });
-//       return {
-//         headRowExtra: { ...headRowExtra, ...acc.headRowExtra },
-//         bodyRowExtra: { ...bodyRowExtra, ...acc.bodyRowExtra },
-//         footerRowExtra: { ...footerRowExtra, ...acc.footerRowExtra },
-//       };
-//     },
-//     { headRowExtra: {}, bodyRowExtra: {}, footerRowExtra: {} }
-//   );
-//   return {
-//     headRow: { ...headRowExtra, ...headRow },
-//     bodyRow: { ...bodyRowExtra, ...bodyRow },
-//     footerRow: { ...footerRowExtra, ...footerRow },
-//   };
-// }
-
-// createCells(item: TData[number], rowIndex: number, from?: 'head' | 'body' | 'footer') {
-
-//   const { headCells, bodyCells, footerCells } = this.columns.reduce(
-//     (acc: Record<string, any>, column, index) => {
-//       const { bodyCell, footerCell, headCell } = this.createCell(item, rowIndex, column, index, from);
-//       if (headCell) acc.headCells.push(headCell);
-//       if (bodyCell) acc.bodyCells.push(bodyCell);
-//       if (footerCell) acc.footerCells.push(footerCell);
-//       return acc;
-//     },
-//     { headCells: [], bodyCells: [], footerCells: [] }
-//   );
-//   return { headCells, bodyCells, footerCells };
-// }
