@@ -62,8 +62,6 @@ export interface IBoringPlugin {
   // lifecycle
   onMount: () => void;
   onUnmount: () => void;
-  beforeCreateRows: (data: any[]) => void;
-  afterCreateRows: (data: any[]) => void;
   onScheduleUpdate: () => void;
   afterScheduleUpdate: () => void;
 
@@ -90,19 +88,25 @@ export interface IBoringPlugin {
   onChangeExtensions: (extensions: BoringTable['extensions']) => void;
 
   // 'head'
+  beforeCreateHeadRows: (data: any[]) => void;
   onCreateHead: (rows: any[]) => void;
   onCreateHeadRow: (row: any) => any;
   onCreateHeadCell: (cell: any) => any;
+  afterCreateHeadRows: (data: any[]) => void;
 
   // 'body'
+  beforeCreateBodyRows: (data: any[]) => void;
   onCreateBody: (rows: any[]) => void;
   onCreateBodyRow: (row: any) => any;
   onCreateBodyCell: (cell: any) => any;
+  afterCreateBodyRows: (data: any[]) => void;
 
   // 'footer'
+  beforeCreateFooterRows: (data: any[]) => void;
   onCreateFooter: (rows: any[]) => void;
   onCreateFooterRow: (row: any) => any;
   onCreateFooterCell: (cell: any) => any;
+  afterCreateFooterRows: (data: any[]) => void;
 
   // 'reset'
   onReset: () => void;
@@ -125,8 +129,6 @@ export class BoringPlugin implements IBoringPlugin {
   // lifecycle
   onMount() {}
   onUnmount() {}
-  beforeCreateRows(data: any[]) {}
-  afterCreateRows(data: any[]) {}
   onScheduleUpdate() {}
   afterScheduleUpdate() {}
 
@@ -158,6 +160,7 @@ export class BoringPlugin implements IBoringPlugin {
   onChangeExtensions(extensions: BoringTable['extensions']) {}
 
   // 'head'
+  beforeCreateHeadRows(data: any[]) {}
   onCreateHead(rows: BoringTable['head']) {
     return {};
   }
@@ -167,8 +170,10 @@ export class BoringPlugin implements IBoringPlugin {
   onCreateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {
     return {};
   }
+  afterCreateHeadRows(data: any[]) {}
 
   // 'body'
+  beforeCreateBodyRows(data: any[]) {}
   onCreateBody(rows: BoringTable['body']) {
     return {};
   }
@@ -178,8 +183,10 @@ export class BoringPlugin implements IBoringPlugin {
   onCreateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {
     return {};
   }
+  afterCreateBodyRows(data: any[]) {}
 
   // 'footer'
+  beforeCreateFooterRows(data: any[]) {}
   onCreateFooter(rows: BoringTable['footer']) {
     return {};
   }
@@ -189,7 +196,7 @@ export class BoringPlugin implements IBoringPlugin {
   onCreateFooterCell(cell: BoringTable['footer'][number]['cells'][number]) {
     return {};
   }
-
+  afterCreateFooterRows(data: any[]) {}
   // 'reset'
   onReset() {}
 }
