@@ -21,6 +21,7 @@ export class ChangePlugin<T> extends BoringPlugin {
   }
 
   changeData(position: number, data: BoringTable['data'][number]) {
+    console.log('changeData', this.table?.data[position], data, position)
     if (this.table) this.table.data[position] = data;
     this.table?.dispatch('update:data');
   }

@@ -29,19 +29,19 @@ export class HiddenRowPlugin extends BoringPlugin {
     this.values.set(id, { ...storedValue, hidden: !storedValue?.hidden });
   };
 
-  private toggleHead = (position: number, id: string, value?: boolean) => {
+  private toggleHead = (rowIndex: number, id: string, value?: boolean) => {
     this.toggle(id, value);
-    this.table?.dispatch('update:head-row', { position });
+    this.table?.dispatch('update:head-row', { rowIndex });
   };
 
-  private toggleBody = (position: number, id: string, value?: boolean) => {
+  private toggleBody = (rowIndex: number, id: string, value?: boolean) => {
     this.toggle(id, value);
-    this.table?.dispatch('update:body-row', { position });
+    this.table?.dispatch('update:body-row', { rowIndex });
   };
 
-  private toggleFooter = (position: number, id: string, value?: boolean) => {
+  private toggleFooter = (rowIndex: number, id: string, value?: boolean) => {
     this.toggle(id, value);
-    this.table?.dispatch('update:footer-row', { position });
+    this.table?.dispatch('update:footer-row', { rowIndex });
   };
 
   onCreateHeadRow(row: BoringTable['head'][number]) {

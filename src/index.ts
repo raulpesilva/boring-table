@@ -1,5 +1,5 @@
 import { BoringTable } from './core';
-import { ChangePlugin, CheckPlugin, FilterPlugin, HiddenRowPlugin, PaginationPlugin, SwapRowPlugin } from './plugins';
+import { ChangePlugin, CheckPlugin } from './plugins';
 import { enableDebug } from './utils';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
@@ -13,7 +13,7 @@ type Data = { id: string; name: string; age: number };
 //   { id: '2', name: 'Mary', age: 20 },
 // ];
 
-const data: Data[] = Array.from({ length: 4_000_000 }, (_, i) => ({
+const data: Data[] = Array.from({ length: 3_000_000 }, (_, i) => ({
   id: `id-${i.toString()}`,
   name: `Name ${i}`,
   age: i,
@@ -35,7 +35,7 @@ const table = new BoringTable({
       type: 'name2',
       head: (arg) => 'head 2',
       body: (arg) => arg.name,
-      footer:[(e, t) => 'footer 2', () => 'footer 3'],
+      footer: [(e, t) => 'footer 2', () => 'footer 3'],
     },
     {
       head: () => 'head 3',
@@ -45,27 +45,26 @@ const table = new BoringTable({
   ],
 
   plugins: [
-    new HiddenRowPlugin(),
+    // new HiddenRowPlugin(),
     new CheckPlugin(),
     new ChangePlugin<Data>(),
-    new FilterPlugin<Data>((param, value) => value.name.includes(param)),
-    new SwapRowPlugin(),
-    new PaginationPlugin(2_000),
+    // new FilterPlugin<Data>((param, value) => value.name.includes(param)),
+    // new SwapRowPlugin(),
+    // new PaginationPlugin(2_000_000),
   ],
 });
 
 const run = async () => {
-  console.log('-----------##-----------');
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   await table.waitForUpdates();
   // console.log('last footer', JSON.stringify(table.footer, null, 2));
-  console.log('last head', JSON.stringify(table.head, null, 2));
-  console.log('-----------##-----------');
-  console.log('head right     :', table.head[0].cells[0].value !== table.head[1].cells[0].value);
-  console.log('footer right     :', table.footer[0].cells[0].value !== table.footer[1].cells[0].value);
+  // console.log('last head', JSON.stringify(table.head, null, 2));
+  //   console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('head right     :', table.head[0].cells[0].value !== table.head[1].cells[0].value);
+  // console.log('footer right     :', table.footer[0].cells[0].value !== table.footer[1].cells[0].value);
   // console.log('events', [...table.events.keys()]);
   // await table.waitForUpdates();
   // console.log('body', JSON.stringify(table.body, null, 2));
-  // await table.body[0].change((prev) => ({ ...prev, age: 27 }));
   // table.reset();
   // table.extensions.filter('o');
   // table.body[0].toggleHidden();
@@ -106,28 +105,36 @@ const run = async () => {
   // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  // console.log('-----------##-----------');
-  // console.log('last body2', table.body[table.body.length - 1]?.check);
-  // table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
-  // console.log('-----------##-----------');
-  // console.log('last body2', table.body[table.body.length - 1]?.check);
-  // table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
-  // console.log('-----------##-----------');
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  console.log('check', table.body[table.body.length - 1]?.check);
+  table.body[table.body.length - 1]?.toggleCheck();
+  table.body[table.body.length - 1]?.toggleCheck();
+  await table.waitForUpdates();
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  console.log('check', table.body[table.body.length - 1]?.check);
+  table.body[table.body.length - 1]?.toggleCheck();
+  await table.waitForUpdates();
+  console.log('check', table.body[table.body.length - 1]?.check);
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  console.log(`\x1B[32m[name]\x1b[34m`, table.body[table.body.length - 1]?.cells[1].value, '\x1b[0m');
+  await table.body[table.body.length - 1].change((prev) => ({ ...prev, name: 'Raullll' }));
+  console.log(`\x1B[32m[name]\x1b[34m`, table.body[table.body.length - 1]?.cells[1].value, '\x1b[0m');
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  table.extensions.resetCheck();
+  await table.waitForUpdates();
+  //   console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   // table.extensions.nextPage();
   // await table.waitForUpdates();
   // table.dispatch('update:all');
   // await table.waitForUpdates();
-  // console.log('-----------##-----------');
-  // console.log('last body2', table.body[table.body.length - 1]?.check);
-  console.log('-----------##-----------');
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   console.log('head length     :', table.head.length);
   console.log('head row length :', table.head[0]?.cells.length);
   console.log('body length     :', table.body.length);
   console.log('body row length :', table.body[0]?.cells.length);
   console.log('footer length   :', table.footer.length);
-  console.log('footer row length :', table.footer[0]?.cells.length);
+  // console.log('footer row length :', table.footer[0]?.cells.length);
   // table.extensions.resetCheck();
   // await table.waitForUpdates();
 
