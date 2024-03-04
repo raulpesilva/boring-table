@@ -5,16 +5,16 @@ export interface BoringEvent {
   'create:all': void;
 
   'create:head-rows': void;
-  'create:head-row': void;
-  'create:head-cell': void;
+  'create:head-row': { rowIndex: number };
+  'create:head-cell': { rowIndex: number; columnIndex: number };
 
   'create:body-rows': void;
-  'create:body-row': void;
-  'create:body-cell': void;
+  'create:body-row': { rowIndex: number };
+  'create:body-cell': { rowIndex: number; columnIndex: number };
 
   'create:footer-rows': void;
-  'create:footer-row': void;
-  'create:footer-cell': void;
+  'create:footer-row': { rowIndex: number };
+  'create:footer-cell': { rowIndex: number; columnIndex: number };
 
   'update:plugins': void;
   'update:config': void;
@@ -24,22 +24,22 @@ export interface BoringEvent {
   'update:events': void;
 
   'update:data': void;
-  'update:data-item': { position: number };
+  'update:data-item': { dataIndex: number };
 
   'update:columns': void;
-  'update:column': { position: number };
+  'update:column': { columnIndex: number };
 
   'update:head-rows': void;
-  'update:head-row': { position: number };
-  'update:head-cell': { column: number; row: number };
+  'update:head-row': { rowIndex: number };
+  'update:head-cell': { rowIndex: number; columnIndex: number };
 
   'update:body-rows': void;
-  'update:body-row': { position: number };
-  'update:body-cell': { column: number; row: number };
+  'update:body-row': { rowIndex: number };
+  'update:body-cell': { rowIndex: number; columnIndex: number };
 
   'update:footer-rows': void;
-  'update:footer-row': { position: number };
-  'update:footer-cell': { column: number; row: number };
+  'update:footer-row': { rowIndex: number };
+  'update:footer-cell': { rowIndex: number; columnIndex: number };
 }
 type MapEvents<T extends Record<string, any>> = Map<keyof T, T[keyof T][] | undefined>;
 
@@ -158,7 +158,7 @@ export class BoringEvents {
   }
 
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
-    console.log('>--------------------------------->>');
+    console.log('\x1B[34m>--------------------------------->>','\x1b[0m');
     this.upsetEvent(event, payload);
     if (this.hasScheduledUpdate) return;
     this.hasScheduledUpdate = true;
@@ -166,12 +166,16 @@ export class BoringEvents {
       this.process();
       this.hasScheduledUpdate = false;
       this.events.clear();
-      console.log('<<---------------------------------<');
+      console.log('\x1B[31m<<---------------------------------<','\x1b[0m');
     });
   }
 
   has(event: keyof BoringEvent) {
     return this.events.has(event);
+  }
+
+  get<T extends keyof BoringEvent>(event: T) {
+    return this.events.get(event) as BoringEvent[T][];
   }
 
   clear() {

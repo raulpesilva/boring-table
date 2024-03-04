@@ -5,7 +5,11 @@ export class CheckPlugin extends BoringPlugin {
   get name() {
     return 'check-plugin';
   }
-  rows: Set<any> = new Set();
+
+  hadRows: Set<any> = new Set();
+  bodyRows: Set<any> = new Set();
+  footerRows: Set<any> = new Set();
+
   table?: BoringTable;
 
   constructor() {
@@ -20,14 +24,22 @@ export class CheckPlugin extends BoringPlugin {
   }
 
   toggleCheck(row: BoringTable['head'][number], event: Parameters<BoringTable['dispatch']>[0]) {
-    this.rows.add(row);
     row.check = !row.check;
-    this.table?.dispatch(event);
+    this.table?.dispatch(event, { rowIndex: row.index });
   }
 
-  toggleHead = (row: BoringTable['head'][number]) => this.toggleCheck(row, 'update:head-rows');
-  toggleBody = (row: BoringTable['body'][number]) => this.toggleCheck(row, 'update:body-rows');
-  toggleFooter = (row: BoringTable['footer'][number]) => this.toggleCheck(row, 'update:footer-rows');
+  toggleHead = (row: BoringTable['head'][number]) => {
+    this.hadRows.add(row);
+    this.toggleCheck(row, 'update:head-row');
+  };
+  toggleBody = (row: BoringTable['body'][number]) => {
+    this.bodyRows.add(row);
+    this.toggleCheck(row, 'update:body-row');
+  };
+  toggleFooter = (row: BoringTable['footer'][number]) => {
+    this.footerRows.add(row);
+    this.toggleCheck(row, 'update:footer-row');
+  };
 
   onCreateHeadRow(row: BoringTable['head'][number]) {
     row.check = !!row.check;
@@ -71,8 +83,18 @@ export class CheckPlugin extends BoringPlugin {
   // }
 
   resetCheck() {
-    this.rows.forEach((i) => (i.check = false));
-    this.table?.dispatch('update:all');
+    this.hadRows.forEach((i) => {
+      i.check = false;
+      this.table?.dispatch('update:head-row', { rowIndex: i.index });
+    });
+    this.bodyRows.forEach((i) => {
+      i.check = false;
+      this.table?.dispatch('update:body-row', { rowIndex: i.index });
+    });
+    this.footerRows.forEach((i) => {
+      i.check = false;
+      this.table?.dispatch('update:footer-row', { rowIndex: i.index });
+    });
   }
   extend() {
     return { resetCheck: () => this.resetCheck() };
