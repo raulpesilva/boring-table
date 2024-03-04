@@ -13,7 +13,7 @@ type Data = { id: string; name: string; age: number };
 //   { id: '2', name: 'Mary', age: 20 },
 // ];
 
-const data: Data[] = Array.from({ length: 2_000_000 }, (_, i) => ({
+const data: Data[] = Array.from({ length: 4_000_000 }, (_, i) => ({
   id: `id-${i.toString()}`,
   name: `Name ${i}`,
   age: i,
@@ -49,11 +49,12 @@ const table = new BoringTable({
     new ChangePlugin<Data>(),
     new FilterPlugin<Data>((param, value) => value.name.includes(param)),
     new SwapRowPlugin(),
-    new PaginationPlugin(1_000),
+    new PaginationPlugin(2_000_000),
   ],
 });
 
 const run = async () => {
+  console.log('-----------##-----------')
   await table.waitForUpdates();
   // console.log('events', [...table.events.keys()]);
   // await table.waitForUpdates();
@@ -99,17 +100,21 @@ const run = async () => {
   // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  console.log('last body2', table.body[table.body.length - 1].check);
+  console.log('-----------##-----------')
+  console.log('last body2', table.body[table.body.length - 1]?.check);
   table.body[table.body.length - 1]?.toggleCheck();
   await table.waitForUpdates();
-  // console.log('last body2', table.body[table.body.length - 1]);
-
-  table.extensions.nextPage();
+  console.log('-----------##-----------')
+  console.log('last body2', table.body[table.body.length - 1]?.check);
+  table.body[table.body.length - 1]?.toggleCheck();
   await table.waitForUpdates();
+  console.log('-----------##-----------')
+  // table.extensions.nextPage();
+  // await table.waitForUpdates();
   // table.dispatch('update:all');
   // await table.waitForUpdates();
-
-  console.log('last body2', table.body[table.body.length - 1].check);
+  console.log('-----------##-----------')
+  console.log('last body2', table.body[table.body.length - 1]?.check);
   console.log('head length   :', table.head.length);
   console.log('body length   :', table.body.length);
   console.log('footer length :', table.footer.length);

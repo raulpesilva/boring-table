@@ -110,6 +110,17 @@ export interface IBoringPlugin {
 
   // 'reset'
   onReset: () => void;
+
+  // update
+  onUpdateBodyRows: (rows: any[]) => void;
+  onUpdateBodyRow: (row: any) => any;
+  onUpdateBodyCell: (cell: any) => any;
+  onUpdateHeadRows: (rows: any[]) => void;
+  onUpdateHeadRow: (row: any) => any;
+  onUpdateHeadCell: (cell: any) => any;
+  onUpdateFooterRows: (rows: any[]) => void;
+  onUpdateFooterRow: (row: any) => any;
+  onUpdateFooterCell: (cell: any) => any;
 }
 
 export class BoringPlugin implements IBoringPlugin {
@@ -199,4 +210,15 @@ export class BoringPlugin implements IBoringPlugin {
   afterCreateFooterRows(data: any[]) {}
   // 'reset'
   onReset() {}
+
+  // update
+  onUpdateBodyRows(rows: BoringTable['body']) {}
+  onUpdateBodyRow(row: BoringTable['body'][number]) {}
+  onUpdateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {}
+  onUpdateHeadRows(rows: BoringTable['head']) {}
+  onUpdateHeadRow(row: BoringTable['head'][number]) {}
+  onUpdateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {}
+  onUpdateFooterRows(rows: BoringTable['footer']) {}
+  onUpdateFooterRow(row: BoringTable['footer'][number]) {}
+  onUpdateFooterCell(cell: BoringTable['footer'][number]['cells'][number]) {}
 }
