@@ -27,19 +27,20 @@ const table = new BoringTable({
   columns: [
     {
       type: 'name1',
-      head: [(e, t) => false],
+      head: [(e, t) => 1, () => 'head 1'],
       body: (arg, e) => arg.id,
-      footer: (arg, e) => arg.id,
+      footer: (arg, e) => 'footer 1',
     },
     {
       type: 'name2',
-      head: (arg) => 'head 1',
+      head: (arg) => 'head 2',
       body: (arg) => arg.name,
+      footer:[(e, t) => 'footer 2', () => 'footer 3'],
     },
     {
-      head: () => 'head 2',
+      head: () => 'head 3',
       body: (arg) => arg.age,
-      footer: [(e, t) => false],
+      footer: [(e, t) => 'footer 4', () => 'footer 5'],
     },
   ],
 
@@ -49,13 +50,18 @@ const table = new BoringTable({
     new ChangePlugin<Data>(),
     new FilterPlugin<Data>((param, value) => value.name.includes(param)),
     new SwapRowPlugin(),
-    new PaginationPlugin(2_000_000),
+    new PaginationPlugin(2_000),
   ],
 });
 
 const run = async () => {
-  console.log('-----------##-----------')
+  console.log('-----------##-----------');
   await table.waitForUpdates();
+  // console.log('last footer', JSON.stringify(table.footer, null, 2));
+  console.log('last head', JSON.stringify(table.head, null, 2));
+  console.log('-----------##-----------');
+  console.log('head right     :', table.head[0].cells[0].value !== table.head[1].cells[0].value);
+  console.log('footer right     :', table.footer[0].cells[0].value !== table.footer[1].cells[0].value);
   // console.log('events', [...table.events.keys()]);
   // await table.waitForUpdates();
   // console.log('body', JSON.stringify(table.body, null, 2));
@@ -100,24 +106,28 @@ const run = async () => {
   // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  console.log('-----------##-----------')
-  console.log('last body2', table.body[table.body.length - 1]?.check);
-  table.body[table.body.length - 1]?.toggleCheck();
-  await table.waitForUpdates();
-  console.log('-----------##-----------')
-  console.log('last body2', table.body[table.body.length - 1]?.check);
-  table.body[table.body.length - 1]?.toggleCheck();
-  await table.waitForUpdates();
-  console.log('-----------##-----------')
+  // console.log('-----------##-----------');
+  // console.log('last body2', table.body[table.body.length - 1]?.check);
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // console.log('-----------##-----------');
+  // console.log('last body2', table.body[table.body.length - 1]?.check);
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // console.log('-----------##-----------');
   // table.extensions.nextPage();
   // await table.waitForUpdates();
   // table.dispatch('update:all');
   // await table.waitForUpdates();
-  console.log('-----------##-----------')
-  console.log('last body2', table.body[table.body.length - 1]?.check);
-  console.log('head length   :', table.head.length);
-  console.log('body length   :', table.body.length);
-  console.log('footer length :', table.footer.length);
+  // console.log('-----------##-----------');
+  // console.log('last body2', table.body[table.body.length - 1]?.check);
+  console.log('-----------##-----------');
+  console.log('head length     :', table.head.length);
+  console.log('head row length :', table.head[0]?.cells.length);
+  console.log('body length     :', table.body.length);
+  console.log('body row length :', table.body[0]?.cells.length);
+  console.log('footer length   :', table.footer.length);
+  console.log('footer row length :', table.footer[0]?.cells.length);
   // table.extensions.resetCheck();
   // await table.waitForUpdates();
 
@@ -160,5 +170,4 @@ type ColumnsType = typeof table.columns;
 // type column = (ColumnsType extends (infer T)[] ? (T extends { head: any } ? T : never) : never)['head'];
 type argA<T extends keyof ColumnsType[number]> = ColumnsType extends (infer R)[] ? R : never;
 
-type a = (() => 'a') | [() => 2] | [() => 1];
-type b = Extract<a, Function> | Extract<a, any[]>[number];
+//   ^?

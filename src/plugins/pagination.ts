@@ -53,14 +53,14 @@ export class PaginationPlugin extends BoringPlugin {
   setPage = (page: number) => {
     if (!this.table) return;
     this.currentPage = page;
-    this.table.dispatch('update:rows');
+    this.table.dispatch('create:body-rows');
   };
 
   nextPage = () => {
     if (!this.table) return;
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
-      this.table.dispatch('update:rows');
+      this.table.dispatch('create:body-rows');
     }
   };
 
@@ -68,7 +68,7 @@ export class PaginationPlugin extends BoringPlugin {
     if (!this.table) return;
     if (this.currentPage > 1) {
       this.currentPage--;
-      this.table.dispatch('update:rows');
+      this.table.dispatch('create:body-rows');
     }
   };
 
