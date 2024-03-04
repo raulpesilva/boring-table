@@ -1,5 +1,6 @@
 import type { Except, Simplify, UnionToIntersection } from 'type-fest';
 import { IBoringPlugin } from '../plugins/base';
+import { BoringEvent, BoringEvents } from './BoringEvents';
 
 if (!globalThis.queueMicrotask) globalThis.queueMicrotask = (cb: () => void) => Promise.resolve().then(cb);
 const doNothing = () => ({});
@@ -10,54 +11,6 @@ const doNothing = () => ({});
 
 // TODO: criar header apenas passando pelas colunas
 // hj ele passa por todas as linhas
-
-const defaultUpdates = {
-  updateRows: false,
-  updateHeadRows: false,
-  updateHeadRow: false,
-  updateHeadCell: false,
-  updateBodyRows: false,
-  updateBodyRow: false,
-  updateBodyCell: false,
-  updateFooterRows: false,
-  updateFooterRow: false,
-  updateFooterCell: false,
-  updateData: false,
-  updateDataItem: false,
-  updateColumns: false,
-  updateColumn: false,
-  updateEvents: false,
-  updatePlugins: false,
-  updateConfig: false,
-  updateExtensions: false,
-  updateAll: false,
-};
-interface UpdateEvents {
-  'update:plugins': void;
-  'update:config': void;
-  'update:extensions': void;
-  'update:all': void;
-  'update:rows': void;
-  'update:events': void;
-
-  'update:data': void;
-  'update:data-item': { position: number };
-
-  'update:columns': void;
-  'update:column': { position: number };
-
-  'update:head-rows': void;
-  'update:head-row': { position: number };
-  'update:head-cell': { column: number; row: number };
-
-  'update:body-rows': void;
-  'update:body-row': { position: number };
-  'update:body-cell': { column: number; row: number };
-
-  'update:footer-rows': void;
-  'update:footer-row': { position: number };
-  'update:footer-cell': { column: number; row: number };
-}
 
 type CellBase<TCellValue> = { id: string; rawId: string; index: number; rowIndex: number; value: TCellValue };
 type Cell<TCellValue, TCellExtra extends Record<string, any>> = Simplify<
@@ -134,8 +87,7 @@ export class BoringTable<
   columns: TColumn;
   getId: (arg: TData[number]) => string;
 
-  events: MapEvents<UpdateEvents> = new Map();
-  hasScheduledUpdate = false;
+  events: BoringEvents;
 
   plugins: IBoringPlugin[] = [];
   config: UnionToIntersection<ReturnType<TPlugins[number]['configure']>> = {} as any;
@@ -156,96 +108,29 @@ export class BoringTable<
     columns: TColumn;
     plugins?: TPlugins;
   }) {
+    this.events = new BoringEvents({ process: this.process.bind(this) });
     this.data = data;
     this.columns = columns;
     this.getId = getId;
     if (plugins) this.plugins = plugins.sort((a, b) => b.priority - a.priority);
     this.configure();
-    this.dispatch('update:all');
+    this.dispatch('event:mount');
+    this.dispatch('create:all');
   }
 
-  private compressEvents() {
-    const updateRows = this.events.has('update:rows');
-
-    const updateHeadRows = this.events.has('update:head-rows');
-    const updateHeadRow = this.events.has('update:head-row');
-    const updateHeadCell = this.events.has('update:head-cell');
-
-    const updateBodyRows = this.events.has('update:body-rows');
-    const updateBodyRow = this.events.has('update:body-row');
-    const updateBodyCell = this.events.has('update:body-cell');
-
-    const updateFooterRows = this.events.has('update:footer-rows');
-    const updateFooterRow = this.events.has('update:footer-row');
-    const updateFooterCell = this.events.has('update:footer-cell');
-
-    const updateData = this.events.has('update:data');
-    const updateDataItem = this.events.has('update:data-item');
-
-    const updateColumns = this.events.has('update:columns');
-    const updateColumn = this.events.has('update:column');
-
-    const updateEvents = this.events.has('update:events');
-
-    const updatePlugins = this.events.has('update:plugins');
-
-    const updateConfig = this.events.has('update:config');
-
-    const updateExtensions = this.events.has('update:extensions');
-
-    const updateAll = this.events.has('update:all');
-
-    const independentEvents = {
-      updateExtensions,
-      updateConfig,
-    };
-
-    if (updateAll || updateData || updatePlugins || updateColumns) {
-      return { ...defaultUpdates, ...independentEvents, updateAll: true };
-    }
-
-    if (updateRows || (updateHeadRows && updateBodyRows && updateFooterRows)) {
-      return { ...defaultUpdates, ...independentEvents, updateRows: true };
-    }
-
-    return {
-      ...defaultUpdates,
-      ...independentEvents,
-      updateHeadRow,
-      updateHeadCell,
-      updateBodyRow,
-      updateBodyCell,
-      updateFooterRow,
-      updateFooterCell,
-      updateDataItem,
-      updateColumn,
-      updateEvents,
-    };
-  }
-
-  upsetEvent<T extends keyof UpdateEvents>(event: T, payload?: UpdateEvents[T]) {
-    if (this.events.has(event)) {
-      this.events.get(event)?.push(payload);
-      return;
-    }
-    this.events.set(event, [payload]);
-  }
-
-  dispatch<T extends keyof UpdateEvents>(event: T, payload?: UpdateEvents[T]) {
-    this.upsetEvent(event, payload);
-    if (!this.hasScheduledUpdate) {
-      this.hasScheduledUpdate = true;
-      queueMicrotask(() => {
-        this.process();
-        this.hasScheduledUpdate = false;
-        this.events.clear();
-      });
-    }
+  dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
+    this.events.dispatch(event, payload);
   }
 
   configure() {
     this.config = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.configure(this) }), {} as any);
     this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {} as any);
+  }
+
+  createAll() {
+    // this.head = this.createHeadRows();
+    this.body = this.createBodyRows();
+    // this.footer = this.createFooterRows();
   }
 
   createBodyCell(item: TData[number], rowIndex: number, column: TColumn[number], index: number) {
@@ -260,7 +145,7 @@ export class BoringTable<
     }
 
     type value = (typeof this.body)[number]['cells'][number]['value'];
-    if (column.body) cell.value = column.body(item, cell as any, this);
+    if (column.body) cell.value = column.body(item, cell as value, this);
 
     return cell;
   }
@@ -321,44 +206,60 @@ export class BoringTable<
     // implementation
     this.plugins.forEach((plugin) => plugin.afterCreateFooterRows(this.data));
   }
-
+  updateAll() {}
   updateData() {}
-  updateRows() {
-    this.body = this.createBodyRows();
+  updateRows() {}
+
+  updateHeadCell() {
+    // const cell = this.head[rowIndex].cells[column];
+    // this.plugins.forEach((plugin) => plugin.onUpdateHeadCell(cell));
+    // cell.value = this.columns[column].head(cell, this);
+  }
+  updateHeadRow() {}
+  updateHeadRows() {}
+
+  updateBodyCell(rowIndex: number, column: number) {
+    const cell = this.body[rowIndex].cells[column];
+    this.plugins.forEach((plugin) => plugin.onUpdateBodyCell(cell));
+    cell.value = this.columns[column].body(this.data[rowIndex], cell, this);
+  }
+  updateBodyRow(rowIndex: number) {
+    const row = this.body[rowIndex];
+    this.plugins.forEach((plugin) => plugin.onUpdateBodyRow(row));
+    for (let index = 0; index < row.cells.length; index++) this.updateBodyCell(rowIndex, index);
+  }
+  updateBodyRows() {
+    this.plugins.forEach((plugin) => plugin.onUpdateBodyRows(this.body));
+    for (let index = 0; index < this.body.length; index++) this.updateBodyRow(index);
   }
 
-  updateHeadRows() {}
-  updateBodyRows() {}
-  updateFooterRows() {}
-
-  updateHeadRow() {}
-  updateBodyRow() {}
-  updateFooterRow() {}
-
-  updateHeadCell() {}
-  updateBodyCell() {}
   updateFooterCell() {}
+  updateFooterRow() {}
+  updateFooterRows() {}
 
   process() {
     console.time('process');
-    const when = this.compressEvents();
-    console.log(Object.fromEntries(Object.entries(when).filter(([, v]) => v)));
-    if (when.updateAll || when.updateData) this.updateData();
-    if (when.updateAll || when.updateRows) this.updateRows();
+    console.log(this.events.events);
+    if (this.events.has('event:mount')) this.plugins.forEach((plugin) => plugin.onMount());
 
-    if (!when.updateRows && when.updateHeadRows) this.updateHeadRows();
-    if (!when.updateRows && when.updateBodyRows) this.updateBodyRows();
-    if (!when.updateRows && when.updateFooterRows) this.updateFooterRows();
+    if (this.events.has('create:all')) this.createAll();
+    if (this.events.has('create:head-rows')) this.createHeadRows();
+    if (this.events.has('create:body-rows')) this.createBodyRows();
+    if (this.events.has('create:footer-rows')) this.createFooterRows();
 
-    if (when.updateHeadRow) this.updateHeadRow();
-    if (when.updateBodyRow) this.updateBodyRow();
-    if (when.updateFooterRow) this.updateFooterRow();
-
-    if (when.updateHeadCell) this.updateHeadCell();
-    if (when.updateBodyCell) this.updateBodyCell();
-    if (when.updateFooterCell) this.updateFooterCell();
+    if (this.events.has('update:all')) this.updateAll();
+    if (this.events.has('update:data')) this.updateData();
+    if (this.events.has('update:rows')) this.updateRows();
+    if (this.events.has('update:head-rows')) this.updateHeadRows();
+    if (this.events.has('update:body-rows')) this.updateBodyRows();
+    if (this.events.has('update:footer-rows')) this.updateFooterRows();
+    if (this.events.has('update:head-row')) this.updateHeadRow();
+    if (this.events.has('update:body-row')) this.updateBodyRow(1);
+    if (this.events.has('update:footer-row')) this.updateFooterRow();
+    if (this.events.has('update:head-cell')) this.updateHeadCell();
+    if (this.events.has('update:body-cell')) this.updateBodyCell(1, 2);
+    if (this.events.has('update:footer-cell')) this.updateFooterCell();
     console.timeEnd('process');
-    this.events.clear();
   }
 
   reset() {
@@ -370,7 +271,7 @@ export class BoringTable<
   waitForUpdates() {
     return new Promise((resolve) => {
       const id = setInterval(() => {
-        if (!this.hasScheduledUpdate) {
+        if (!this.events.hasScheduledUpdate) {
           clearInterval(id);
           resolve(undefined);
         }

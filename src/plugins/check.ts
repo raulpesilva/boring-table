@@ -26,8 +26,8 @@ export class CheckPlugin extends BoringPlugin {
   }
 
   toggleHead = (row: BoringTable['head'][number]) => this.toggleCheck(row, 'update:head-rows');
-  toggleBody = (row: BoringTable['head'][number]) => this.toggleCheck(row, 'update:body-rows');
-  toggleFooter = (row: BoringTable['head'][number]) => this.toggleCheck(row, 'update:footer-rows');
+  toggleBody = (row: BoringTable['body'][number]) => this.toggleCheck(row, 'update:body-rows');
+  toggleFooter = (row: BoringTable['footer'][number]) => this.toggleCheck(row, 'update:footer-rows');
 
   onCreateHeadRow(row: BoringTable['head'][number]) {
     row.check = !!row.check;
