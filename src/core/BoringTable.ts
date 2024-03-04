@@ -77,13 +77,18 @@ type ExtractRow<
   >
 >;
 
-type MapEvents<T extends Record<string, any>> = Map<keyof T, T[keyof T][] | undefined>;
+type ExtractColumnKey<TColumn extends Column<any>[], K extends keyof TColumn[number]> =
+  | Extract<TColumn[number][K], Function>
+  | Extract<TColumn[number][K], Function[]>[number];
+
 export class BoringTable<
   TData extends any[] = any,
   const TPlugins extends IBoringPlugin[] = IBoringPlugin[],
   const TColumn extends Column<TData[number], TPlugins>[] = Column<TData[number], TPlugins>[]
 > {
   data: TData;
+  footerColumns: { type?: string; footer: ExtractColumnKey<TColumn, 'footer'> }[][] = [];
+  headColumns: { type?: string; head: ExtractColumnKey<TColumn, 'head'> }[][] = [];
   columns: TColumn;
   getId: (arg: TData[number]) => string;
 
@@ -113,9 +118,41 @@ export class BoringTable<
     this.columns = columns;
     this.getId = getId;
     if (plugins) this.plugins = plugins.sort((a, b) => b.priority - a.priority);
+    this.composeColumns();
     this.configure();
     this.dispatch('event:mount');
     this.dispatch('create:all');
+  }
+
+  composeColumns() {
+    for (let columnIndex = 0; columnIndex < this.columns.length; columnIndex++) {
+      const column = this.columns[columnIndex];
+      const { body: _, head, footer, ...rest } = column;
+
+      if (!Array.isArray(footer) && !!footer) {
+        if (!this.footerColumns[0]) this.footerColumns[0] = [];
+        this.footerColumns[0].push({ ...rest, footer });
+      }
+
+      if (Array.isArray(footer)) {
+        for (let i = 0; i < (footer.length ?? 0); i++) {
+          if (!this.footerColumns[i]) this.footerColumns[i] = [];
+          if (footer[i]) this.footerColumns[i].push({ ...rest, footer: footer[i] });
+        }
+      }
+
+      if (!Array.isArray(head) && !!head) {
+        if (!this.headColumns[0]) this.headColumns[0] = [];
+        this.headColumns[0].push({ ...rest, head });
+      }
+
+      if (Array.isArray(head)) {
+        for (let i = 0; i < (head.length ?? 0); i++) {
+          if (!this.headColumns[i]) this.headColumns[i] = [];
+          if (head[i]) this.headColumns[i].push({ ...rest, head: head[i] });
+        }
+      }
+    }
   }
 
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
@@ -128,9 +165,9 @@ export class BoringTable<
   }
 
   createAll() {
-    // this.head = this.createHeadRows();
+    this.head = this.createHeadRows();
     this.body = this.createBodyRows();
-    // this.footer = this.createFooterRows();
+    this.footer = this.createFooterRows();
   }
 
   createBodyCell(item: TData[number], rowIndex: number, column: TColumn[number], index: number) {
@@ -149,7 +186,6 @@ export class BoringTable<
 
     return cell;
   }
-
   createBodyCells(item: TData[number], rowIndex: number) {
     type Cells = (typeof this.body)[number]['cells'];
     const cells: Cells = [];
@@ -160,7 +196,6 @@ export class BoringTable<
     }
     return cells;
   }
-
   createBodyRow(item: TData[number], index: number) {
     const cells = this.createBodyCells(item, index);
     const rawId = this.getId(item);
@@ -175,7 +210,6 @@ export class BoringTable<
 
     return row;
   }
-
   createBodyRows() {
     this.plugins.forEach((plugin) => plugin.beforeCreateBodyRows(this.data));
     const rows: typeof this.body = [];
@@ -189,23 +223,109 @@ export class BoringTable<
     return rows;
   }
 
-  createHeadCell() {}
-  createHeadCells() {}
-  createHeadRow() {}
+  createHeadCell(rowIndex: number, column: (typeof this.headColumns)[number][number], columnIndex: number) {
+    const rawId = `${columnIndex}`;
+    const id = `cell-${rowIndex}-${columnIndex}`;
+    const baseCell = { id, rawId, index: columnIndex, rowIndex, value: undefined };
+    const cell = { ...baseCell };
+    for (let i = 0; i < this.plugins.length; i++) {
+      const plugin = this.plugins[i];
+      if (!!column) Object.assign(cell, plugin.onCreateHeadCell.bind(plugin)(cell));
+    }
+    type Value = (typeof this.head)[number]['cells'][number]['value'];
+    if (column) cell.value = column.head(cell as Value, this);
+
+    return cell;
+  }
+  createHeadCells(rowIndex: number) {
+    const columns = this.headColumns[rowIndex];
+    const cells: (typeof this.head)[number]['cells'] = [];
+    for (let index = 0; index < columns.length; index++) {
+      const column = columns[index];
+      const cell = this.createHeadCell(rowIndex, column, index);
+      cells.push(cell);
+    }
+    return cells;
+  }
+  createHeadRow(rowIndex: number) {
+    const cells = this.createHeadCells(rowIndex);
+    const rawId = `${rowIndex}`;
+    const id = `row-${rowIndex}`;
+    type Row = (typeof this.head)[number];
+    const row = { id, rawId, index: rowIndex, cells } as Row;
+
+    for (let i = 0; i < this.plugins.length; i++) {
+      const plugin = this.plugins[i];
+      if (row.cells.length > 0) Object.assign(row, plugin.onCreateHeadRow.bind(plugin)(row));
+    }
+
+    return row;
+  }
   createHeadRows() {
     this.plugins.forEach((plugin) => plugin.beforeCreateHeadRows(this.data));
-    // implementation
+    const rows: typeof this.head = [];
+
+    for (let index = 0; index < this.headColumns.length; index++) {
+      const row = this.createHeadRow(index);
+      rows.push(row);
+    }
+
     this.plugins.forEach((plugin) => plugin.afterCreateHeadRows(this.data));
+    return rows;
   }
 
-  createFooterCell() {}
-  createFooterCells() {}
-  createFooterRow() {}
+  createFooterCell(rowIndex: number, column: (typeof this.footerColumns)[number][number], columnIndex: number) {
+    const rawId = `${columnIndex}`;
+    const id = `cell-${rowIndex}-${columnIndex}`;
+    const baseCell = { id, rawId, index: columnIndex, rowIndex, value: undefined };
+    const cell = { ...baseCell };
+    for (let i = 0; i < this.plugins.length; i++) {
+      const plugin = this.plugins[i];
+      if (!!column) Object.assign(cell, plugin.onCreateFooterCell.bind(plugin)(cell));
+    }
+    type Value = (typeof this.footer)[number]['cells'][number]['value'];
+    if (column) cell.value = column.footer(cell as Value, this);
+
+    return cell;
+  }
+  createFooterCells(rowIndex: number) {
+    const cells: (typeof this.footer)[number]['cells'] = [];
+    const columns = this.footerColumns[rowIndex];
+    for (let index = 0; index < columns.length; index++) {
+      const column = columns[index];
+      const cell = this.createFooterCell(rowIndex, column, index);
+      cells.push(cell);
+    }
+
+    return cells;
+  }
+  createFooterRow(rowIndex: number) {
+    const cells = this.createFooterCells(rowIndex);
+    const rawId = `${rowIndex}`;
+    const id = `row-${rowIndex}`;
+    type Row = (typeof this.footer)[number];
+    const row = { id, rawId, index: rowIndex, cells } as Row;
+
+    for (let i = 0; i < this.plugins.length; i++) {
+      const plugin = this.plugins[i];
+      if (row.cells.length > 0) Object.assign(row, plugin.onCreateFooterRow.bind(plugin)(row));
+    }
+
+    return row;
+  }
   createFooterRows() {
     this.plugins.forEach((plugin) => plugin.beforeCreateFooterRows(this.data));
-    // implementation
+    const rows: typeof this.footer = [];
+
+    for (let index = 0; index < this.footerColumns.length; index++) {
+      const row = this.createFooterRow(index);
+      rows.push(row);
+    }
+
     this.plugins.forEach((plugin) => plugin.afterCreateFooterRows(this.data));
+    return rows;
   }
+
   updateAll() {}
   updateData() {}
   updateRows() {}
