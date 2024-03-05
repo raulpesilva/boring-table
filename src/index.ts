@@ -1,6 +1,7 @@
-import { BoringTable, TBody, TBodyValue, TConfig, TExtensions, TFooter, TFooterValue, THead, THeadValue } from './core';
+import { BoringTable } from './core';
 import { ChangePlugin, CheckPlugin, PaginationPlugin } from './plugins';
 import { enableDebug } from './utils';
+export { BoringTable } from './core';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
 // _getDefaultColumnDef: usa o memo para evitar re-render desnecessário
@@ -27,20 +28,20 @@ const table = new BoringTable({
   columns: [
     {
       type: 'name1',
-      head: [(e, t) => 1, () => 'head 1'],
-      body: (arg, e) => arg.id,
-      footer: (arg, e) => 'footer 1',
+      head: [(_e, _t) => 1, () => 'head 1'],
+      body: (arg, _e) => arg.id,
+      footer: (_arg, _e) => 'footer 1',
     },
     {
       type: 'name2',
-      head: (arg) => 'head 2',
+      head: (_arg) => 'head 2',
       body: (arg) => arg.name,
-      footer: [(e, t) => 'footer 2', () => 'footer 3'],
+      footer: [(_e, _t) => 'footer 2', () => 'footer 3'],
     },
     {
       head: () => 'head 3',
       body: (arg) => arg.age,
-      footer: [(e, t) => 'footer 4', () => 'footer 5'],
+      footer: [(_e, _t) => 'footer 4', () => 'footer 5'],
     },
   ],
 
@@ -183,20 +184,36 @@ const run = async () => {
 };
 run();
 
-type ATable = typeof table;
-type Config = TConfig<ATable>;
-//   ^?
-type Extensions = TExtensions<ATable>;
-//   ^?
-type HeadType = THead<ATable>;
-//   ^?
-type BodyType = TBody<ATable>;
-//   ^?
-type FooterType = TFooter<ATable>;
-//   ^?
-type headValue = THeadValue<ATable>;
-//   ^?
-type bodyValue = TBodyValue<ATable>;
-//   ^?
-type footerValue = TFooterValue<ATable>;
-//   ^?
+// type ATable = typeof table;
+// type Config = TConfig<ATable>;
+// type Plugins = TPlugins<ATable>;
+// //   ^?
+// type Extensions = TExtensions<ATable>;
+// //   ^?
+// type HeadType = THead<ATable>;
+// //   ^?
+// type BodyType = TBody<ATable>;
+// //   ^?
+// type FooterType = TFooter<ATable>;
+// //   ^?
+// type headValue = THeadValue<ATable>;
+// //   ^?
+// type bodyValue = TBodyValue<ATable>;
+// //   ^?
+// type footerValue = TFooterValue<ATable>;
+// //   ^?
+// class A {
+//   test() {
+//     return { a: 1 };
+//   }
+// }
+
+// class B {
+//   test() {}
+// }
+
+// class C {}
+
+// type Classes = A | B | C;
+// type a = Exclude<ReturnType<Extract<Classes, { test: () => any }>['test']>, void>;
+// //   ^?

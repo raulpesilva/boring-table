@@ -1,26 +1,22 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "es2022",
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "moduleResolution": "Node",
     "strict": true,
-    "noUncheckedIndexedAccess": false,
-
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
-    "outDir": "dist",
     "sourceMap": true,
-
-    "declaration": true,
-
-    "composite": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
     "declarationMap": true,
-
-    "lib": ["es2022"]
-  }
+    "declaration": true
+  },
+  "include": ["src"]
 }

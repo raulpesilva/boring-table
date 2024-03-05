@@ -2,8 +2,6 @@ import type { Except, Simplify, UnionToIntersection } from 'type-fest';
 import { IBoringPlugin } from '../plugins/base';
 import { BoringEvent, BoringEvents } from './BoringEvents';
 
-if (!globalThis.queueMicrotask) globalThis.queueMicrotask = (cb: () => void) => Promise.resolve().then(cb);
-const doNothing = () => ({});
 
 // definir melhor os momentos e os eventos
 // para cada momento definir evento para antes e depois
@@ -28,29 +26,34 @@ type Row<TCellValue, TCellExtra extends Record<string, any>, TRowExtra extends R
   RowBase<TCellValue, TCellExtra> & Except<TRowExtra, keyof RowBase<TCellValue, TCellExtra>>
 >;
 
+type ExtractPluginMethod<T extends IBoringPlugin[], K extends keyof T[number]> = Extract<T[number], Record<K, any>>[K];
+type ComposePluginMethod<T extends IBoringPlugin[], K extends keyof T[number]> = Simplify<
+  UnionToIntersection<ReturnType<ExtractPluginMethod<T, K>>>
+>;
+
 type Column<TValue extends any[], TPlugins extends IBoringPlugin[] = IBoringPlugin[]> = {
   type?: string;
   head:
     | ((
-        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateHeadCell']>> & { id: string }>,
+        extra: ComposePluginMethod<TPlugins, 'onCreateHeadCell'> & { id: string },
         table: BoringTable<TValue, TPlugins>
       ) => any)
     | ((
-        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateHeadCell']>> & { id: string }>,
+        extra: ComposePluginMethod<TPlugins, 'onCreateHeadCell'> & { id: string },
         table: BoringTable<TValue, TPlugins>
       ) => any)[];
   body: (
     arg: TValue,
-    extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateBodyCell']>> & { id: string }>,
+    extra: ComposePluginMethod<TPlugins, 'onCreateBodyCell'> & { id: string },
     table: BoringTable<TValue, TPlugins>
   ) => any;
   footer?:
     | ((
-        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateFooterCell']>> & { id: string }>,
+        extra: ComposePluginMethod<TPlugins, 'onCreateFooterCell'> & { id: string },
         table: BoringTable<TValue, TPlugins>
       ) => any)
     | ((
-        extra: Simplify<UnionToIntersection<ReturnType<TPlugins[number]['onCreateFooterCell']>> & { id: string }>,
+        extra: ComposePluginMethod<TPlugins, 'onCreateFooterCell'> & { id: string },
         table: BoringTable<TValue, TPlugins>
       ) => any)[];
 };
@@ -77,7 +80,7 @@ type ExtractRow<
   >
 >;
 
-type ExtractColumnKey<TColumn extends Column<any>[], K extends keyof TColumn[number]> =
+type ExtractColumnKey<TColumn extends Column<any, any>[], K extends keyof TColumn[number]> =
   | Extract<TColumn[number][K], Function>
   | Extract<TColumn[number][K], Function[]>[number];
 
@@ -94,9 +97,9 @@ export class BoringTable<
 
   events: BoringEvents;
 
-  plugins: IBoringPlugin[] = [];
-  config: UnionToIntersection<ReturnType<TPlugins[number]['configure']>> = {} as any;
-  extensions: UnionToIntersection<ReturnType<TPlugins[number]['extend']>> = {} as any;
+  plugins: TPlugins = [] as any ;
+  config!: UnionToIntersection<ReturnType<TPlugins[number]['configure']>>;
+  extensions!: UnionToIntersection<ReturnType<TPlugins[number]['extend']>>;
 
   head: ExtractRow<TColumn, TPlugins, 'head', 'onCreateHeadCell', 'onCreateHeadRow'>[] = [];
   body: ExtractRow<TColumn, TPlugins, 'body', 'onCreateBodyCell', 'onCreateBodyRow'>[] = [];
@@ -327,7 +330,7 @@ export class BoringTable<
   }
 
   updatePlugins() {
-    this.plugins.forEach((plugin) => plugin.onUpdatePlugins(this.plugins as any));
+    this.plugins.forEach((plugin) => plugin.onUpdatePlugins(this.plugins));
   }
   updateConfig() {
     this.plugins.forEach((plugin) => plugin.onUpdateConfig(this.config));
@@ -519,3 +522,4 @@ export type TConfig<T extends { config: any }> = T['config'];
 export type TExtensions<T extends { extensions: any }> = T['extensions'];
 export type TColumns<T extends { columns: any }> = T['columns'];
 export type TData<T extends { data: any }> = T['data'];
+export type TPlugins<T extends { plugins: any }> = T['plugins'];
