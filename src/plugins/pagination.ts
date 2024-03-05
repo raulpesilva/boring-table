@@ -5,7 +5,7 @@ export class PaginationPlugin extends BoringPlugin {
   get name() {
     return 'pagination-plugin';
   }
-  priority = 100;
+  priority = -1;
   table!: GenericBoringTable;
   pageSize = 10;
   currentPage = 1;
@@ -45,10 +45,7 @@ export class PaginationPlugin extends BoringPlugin {
   afterCreateBodyRows(rows: GenericBoringTable['body']): void {
     this.total = this.table.body.length;
     this.totalPages = Math.ceil(this.total / this.pageSize);
-    const start = (this.currentPage - 1) * this.pageSize;
-    const end = this.currentPage * this.pageSize;
-    this.page = (rows ?? this.table.body).slice(start, end);
-    this.table.dispatch('update:extensions');
+    this.updatePage(rows);
   }
 
   onUpdateBodyRows() {

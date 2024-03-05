@@ -1,11 +1,11 @@
-import type { BoringTable } from '../core';
+import type { BoringTable, GenericBoringTable } from '../core';
 import { isDebugEnabled } from '../utils';
 
 // definir melhor os momentos e os eventos
 // adicionar momentos antes e dps de uma iteração
 // adicionar eventos para cada momento
 
-const a = [
+export const _a = [
   'name',
   'priority',
   // lifecycle
@@ -70,22 +70,22 @@ export interface IBoringPlugin {
   onUpdateDataItem: (data: any) => void;
 
   // 'columns'
-  onUpdateColumns: (columns: BoringTable['columns']) => void;
-  onUpdateColumn: (column: BoringTable['columns'][number], index: number) => void;
+  onUpdateColumns: (columns: any[]) => void;
+  onUpdateColumn: (column: any, index: number) => void;
 
   // 'events'
-  onUpdateEvents: (events: BoringTable['events']) => void;
+  onUpdateEvents: (events: GenericBoringTable['events']) => void;
 
   // 'plugins'
-  onUpdatePlugins: (plugins: BoringPlugin[]) => void;
+  onUpdatePlugins: (plugins: any[]) => void;
 
   // 'config'
-  configure: (table: BoringTable) => any;
-  onUpdateConfig: (config: BoringTable['config']) => void;
+  configure: (table: any) => any;
+  onUpdateConfig: (config: GenericBoringTable['config']) => void;
 
   // 'extensions'
   extend: () => any;
-  onUpdateExtensions: (extensions: BoringTable['extensions']) => void;
+  onUpdateExtensions: (extensions: GenericBoringTable['extensions']) => void;
 
   // 'head'
   beforeCreateHeadRows: (data: any[]) => void;
@@ -144,81 +144,81 @@ export class BoringPlugin implements IBoringPlugin {
   afterScheduleUpdate() {}
 
   // 'data'
-  onUpdateData(data: any[]) {}
-  onUpdateDataItem(data: any) {}
+  onUpdateData(_data: any[]) {}
+  onUpdateDataItem(_data: any) {}
 
   // 'columns'
-  onUpdateColumns(columns: BoringTable['columns']) {}
-  onUpdateColumn(column: BoringTable['columns'][number], index: number) {}
+  onUpdateColumns(_columns: BoringTable['columns']) {}
+  onUpdateColumn(_column: BoringTable['columns'][number], _index: number) {}
 
   // 'events'
-  onUpdateEvents(events: BoringTable['events']) {}
+  onUpdateEvents(_events: BoringTable['events']) {}
 
   // 'plugins'
-  onUpdatePlugins(plugins: BoringPlugin[]) {}
+  onUpdatePlugins(_plugins: BoringPlugin[]) {}
 
   // 'config'
-  configure(table: BoringTable) {
+  configure(_table: BoringTable) {
     throw new Error('Plugin must override "configure"');
     return {};
   }
-  onUpdateConfig(config: BoringTable['config']) {}
+  onUpdateConfig(_config: BoringTable['config']) {}
 
   // 'extensions'
   extend() {
     return {};
   }
-  onUpdateExtensions(extensions: BoringTable['extensions']) {}
+  onUpdateExtensions(_extensions: BoringTable['extensions']) {}
 
   // 'head'
-  beforeCreateHeadRows(data: any[]) {}
-  onCreateHead(rows: BoringTable['head']) {
+  beforeCreateHeadRows(_data: any[]) {}
+  onCreateHead(_rows: BoringTable['head']) {
     return {};
   }
-  onCreateHeadRow(row: BoringTable['head'][number]) {
+  onCreateHeadRow(_row: BoringTable['head'][number]) {
     return {};
   }
-  onCreateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {
+  onCreateHeadCell(_cell: BoringTable['head'][number]['cells'][number]) {
     return {};
   }
-  afterCreateHeadRows(data: any[]) {}
+  afterCreateHeadRows(_data: any[]) {}
 
   // 'body'
-  beforeCreateBodyRows(data: any[]) {}
-  onCreateBody(rows: BoringTable['body']) {
+  beforeCreateBodyRows(_data: any[]) {}
+  onCreateBody(_rows: BoringTable['body']) {
     return {};
   }
-  onCreateBodyRow(row: BoringTable['body'][number]) {
+  onCreateBodyRow(_row: BoringTable['body'][number]) {
     return {};
   }
-  onCreateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {
+  onCreateBodyCell(_cell: BoringTable['body'][number]['cells'][number]) {
     return {};
   }
-  afterCreateBodyRows(data: any[]) {}
+  afterCreateBodyRows(_data: any[]) {}
 
   // 'footer'
-  beforeCreateFooterRows(data: any[]) {}
-  onCreateFooter(rows: BoringTable['footer']) {
+  beforeCreateFooterRows(_data: any[]) {}
+  onCreateFooter(_rows: BoringTable['footer']) {
     return {};
   }
-  onCreateFooterRow(row: BoringTable['footer'][number]) {
+  onCreateFooterRow(_row: BoringTable['footer'][number]) {
     return {};
   }
-  onCreateFooterCell(cell: BoringTable['footer'][number]['cells'][number]) {
+  onCreateFooterCell(_cell: BoringTable['footer'][number]['cells'][number]) {
     return {};
   }
-  afterCreateFooterRows(data: any[]) {}
+  afterCreateFooterRows(_data: any[]) {}
   // 'reset'
   onReset() {}
 
   // update
-  onUpdateBodyRows(rows: BoringTable['body']) {}
-  onUpdateBodyRow(row: BoringTable['body'][number]) {}
-  onUpdateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {}
-  onUpdateHeadRows(rows: BoringTable['head']) {}
-  onUpdateHeadRow(row: BoringTable['head'][number]) {}
-  onUpdateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {}
-  onUpdateFooterRows(rows: BoringTable['footer']) {}
-  onUpdateFooterRow(row: BoringTable['footer'][number]) {}
-  onUpdateFooterCell(cell: BoringTable['footer'][number]['cells'][number]) {}
+  onUpdateBodyRows(_rows: BoringTable['body']) {}
+  onUpdateBodyRow(_row: BoringTable['body'][number]) {}
+  onUpdateBodyCell(_cell: BoringTable['body'][number]['cells'][number]) {}
+  onUpdateHeadRows(_rows: BoringTable['head']) {}
+  onUpdateHeadRow(_row: BoringTable['head'][number]) {}
+  onUpdateHeadCell(_cell: BoringTable['head'][number]['cells'][number]) {}
+  onUpdateFooterRows(_rows: BoringTable['footer']) {}
+  onUpdateFooterRow(_row: BoringTable['footer'][number]) {}
+  onUpdateFooterCell(_cell: BoringTable['footer'][number]['cells'][number]) {}
 }
