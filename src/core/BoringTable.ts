@@ -207,8 +207,8 @@ export class BoringTable<
       const row = this.createBodyRow(item, index);
       if (row) rows.push(row);
     }
-    this.plugins.forEach((plugin) => plugin.afterCreateBodyRows(this.data));
-
+    this.body = rows;
+    this.plugins.forEach((plugin) => plugin.afterCreateBodyRows(rows, this.data));
     return rows;
   }
 
@@ -258,7 +258,7 @@ export class BoringTable<
       const row = this.createHeadRow(index);
       rows.push(row);
     }
-
+    this.head = rows;
     this.plugins.forEach((plugin) => plugin.afterCreateHeadRows(this.data));
     return rows;
   }
@@ -310,33 +310,41 @@ export class BoringTable<
       const row = this.createFooterRow(index);
       rows.push(row);
     }
-
+    this.footer = rows;
     this.plugins.forEach((plugin) => plugin.afterCreateFooterRows(this.data));
     return rows;
   }
 
   configure() {
-    this.config = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.configure(this) }), {} as any);
-    this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), {} as any);
+    this.config = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.configure(this) }), this.config);
+    this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), this.extensions);
   }
 
   createAll() {
-    this.head = this.createHeadRows();
-    this.body = this.createBodyRows();
-    this.footer = this.createFooterRows();
+    this.createHeadRows();
+    this.createBodyRows();
+    this.createFooterRows();
   }
 
-  updatePlugins() {}
-  updateConfig() {}
-  updateExtensions() {}
-  updateEvents() {}
+  updatePlugins() {
+    this.plugins.forEach((plugin) => plugin.onUpdatePlugins(this.plugins as any));
+  }
+  updateConfig() {
+    this.plugins.forEach((plugin) => plugin.onUpdateConfig(this.config));
+  }
+  updateExtensions() {
+    this.plugins.forEach((plugin) => plugin.onUpdateExtensions(this.extensions));
+  }
+  updateEvents() {
+    this.plugins.forEach((plugin) => plugin.onUpdateEvents(this.events));
+  }
 
   updateAll() {
     this.updateData();
     this.updateRows();
   }
   updateData() {
-    this.plugins.forEach((plugin) => plugin.onChangeData(this.data));
+    this.plugins.forEach((plugin) => plugin.onUpdateData(this.data));
     this.updateRows();
   }
   updateRows() {
@@ -391,7 +399,7 @@ export class BoringTable<
   }
 
   process() {
-    console.time('process');
+    console.time('\x1B[34mprocess');
     console.log(this.events.events);
     if (this.events.has('event:mount')) this.plugins.forEach((plugin) => plugin.onMount());
 
@@ -472,7 +480,7 @@ export class BoringTable<
     if (this.events.has('update:config')) this.updateConfig();
     if (this.events.has('update:extensions')) this.updateExtensions();
     if (this.events.has('update:events')) this.updateEvents();
-    console.timeEnd('process');
+    console.timeEnd('\x1B[34mprocess');
   }
 
   reset() {
@@ -497,3 +505,17 @@ export class BoringTable<
 }
 
 export type GenericBoringTable = BoringTable<any, IBoringPlugin[], Column<any>[]>;
+export type THead<T extends { head: any[] }> = T['head'];
+export type TBody<T extends { body: any[] }> = T['body'];
+export type TFooter<T extends { footer: any[] }> = T['footer'];
+
+type TValues<T extends { cells: { value: any }[] }[]> = T[number]['cells'][number]['value'];
+
+export type THeadValue<T extends { head: { cells: { value: any }[] }[] }> = TValues<T['head']>;
+export type TBodyValue<T extends { body: { cells: { value: any }[] }[] }> = TValues<T['body']>;
+export type TFooterValue<T extends { footer: { cells: { value: any }[] }[] }> = TValues<T['footer']>;
+
+export type TConfig<T extends { config: any }> = T['config'];
+export type TExtensions<T extends { extensions: any }> = T['extensions'];
+export type TColumns<T extends { columns: any }> = T['columns'];
+export type TData<T extends { data: any }> = T['data'];

@@ -1,5 +1,5 @@
-import { BoringTable } from './core';
-import { ChangePlugin, CheckPlugin } from './plugins';
+import { BoringTable, TBody, TBodyValue, TConfig, TExtensions, TFooter, TFooterValue, THead, THeadValue } from './core';
+import { ChangePlugin, CheckPlugin, PaginationPlugin } from './plugins';
 import { enableDebug } from './utils';
 // adicionar memo para evitar re-render desnecessário
 // referencia: https://github.com/TanStack/table/blob/main/packages/table-core/src/core/table.ts
@@ -13,7 +13,7 @@ type Data = { id: string; name: string; age: number };
 //   { id: '2', name: 'Mary', age: 20 },
 // ];
 
-const data: Data[] = Array.from({ length: 3_000_000 }, (_, i) => ({
+const data: Data[] = Array.from({ length: 1_000_000 }, (_, i) => ({
   id: `id-${i.toString()}`,
   name: `Name ${i}`,
   age: i,
@@ -50,7 +50,7 @@ const table = new BoringTable({
     new ChangePlugin<Data>(),
     // new FilterPlugin<Data>((param, value) => value.name.includes(param)),
     // new SwapRowPlugin(),
-    // new PaginationPlugin(2_000_000),
+    new PaginationPlugin(4),
   ],
 });
 
@@ -105,35 +105,61 @@ const run = async () => {
   // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log(table.body[table.body.length - 1]?.cells[0]);
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  console.log('check', table.body[table.body.length - 1]?.check);
-  table.body[table.body.length - 1]?.toggleCheck();
-  table.body[table.body.length - 1]?.toggleCheck();
-  await table.waitForUpdates();
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  console.log('check', table.body[table.body.length - 1]?.check);
-  table.body[table.body.length - 1]?.toggleCheck();
-  await table.waitForUpdates();
-  console.log('check', table.body[table.body.length - 1]?.check);
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  console.log(`\x1B[32m[name]\x1b[34m`, table.body[table.body.length - 1]?.cells[1].value, '\x1b[0m');
-  await table.body[table.body.length - 1].change((prev) => ({ ...prev, name: 'Raullll' }));
-  console.log(`\x1B[32m[name]\x1b[34m`, table.body[table.body.length - 1]?.cells[1].value, '\x1b[0m');
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  table.extensions.resetCheck();
-  await table.waitForUpdates();
-  //   console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  // table.extensions.nextPage();
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('check', table.body[table.body.length - 1]?.check);
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // table.body[table.body.length - 1]?.toggleCheck();
   // await table.waitForUpdates();
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('check', table.body[table.body.length - 1]?.check);
+  // table.body[table.body.length - 1]?.toggleCheck();
+  // await table.waitForUpdates();
+  // console.log('check', table.body[table.body.length - 1]?.check);
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // // table.extensions.nextPage();
+  // await table.waitForUpdates();
+  // console.log('check', table.body[table.body.length - 1]?.check);
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+
+  // console.log(`\x1B[32m[name]\x1b[34m`, table.body[table.body.length - 1]?.cells[1].value, '\x1b[0m');
+  // await table.body[table.body.length - 1].change((prev) => ({ ...prev, name: 'Raullll' }));
+  // console.log(`\x1B[32m[name]\x1b[34m`, table.body[table.body.length - 1]?.cells[1].value, '\x1b[0m');
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // table.extensions.resetCheck();
+  // await table.waitForUpdates();
+
   // table.dispatch('update:all');
   // await table.waitForUpdates();
   // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // await table.waitForUpdates();
   console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   console.log('head length     :', table.head.length);
   console.log('head row length :', table.head[0]?.cells.length);
-  console.log('body length     :', table.body.length);
-  console.log('body row length :', table.body[0]?.cells.length);
-  console.log('footer length   :', table.footer.length);
+  console.log('body row length :', table.body.length);
+
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  console.log('extensions page:', table.extensions);
+  console.log('page length     :', table.extensions.page.length);
+  console.log('page row length :', table.extensions.page[0]?.cells.length);
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // table.extensions.nextPage();
+  // table.extensions.nextPage();
+  // await table.waitForUpdates();
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('extensions page:', table.extensions);
+  // console.log('page length     :', table.extensions.page.length);
+  // console.log('page row length :', table.extensions.page[0]?.cells.length);
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // table.extensions.nextPage();
+  // await table.waitForUpdates();
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('extensions page:', table.extensions);
+  // console.log('page length     :', table.extensions.page.length);
+  // console.log('page row length :', table.extensions.page[0]?.cells.length);
+  // console.log('footer length   :', table.footer.length);
   // console.log('footer row length :', table.footer[0]?.cells.length);
   // table.extensions.resetCheck();
   // await table.waitForUpdates();
@@ -156,25 +182,21 @@ const run = async () => {
   // console.log('footer', JSON.stringify(table.footer, null, 2));
 };
 run();
-type Config = typeof table.config;
-//   ^?
-type Extensions = typeof table.extensions;
-//   ^?
-type HeadType = typeof table.head;
-//   ^?
-type BodyType = typeof table.body;
-//   ^?
-type FooterType = typeof table.footer;
-//   ^?
-type HeadValue = HeadType[number]['cells'][number]['value'];
-//   ^?
-type BodyValue = BodyType[number]['cells'][number]['value'];
-//   ^?
-type FooterValue = FooterType[number]['cells'][number]['value'];
-//   ^?
 
-type ColumnsType = typeof table.columns;
-// type column = (ColumnsType extends (infer T)[] ? (T extends { head: any } ? T : never) : never)['head'];
-type argA<T extends keyof ColumnsType[number]> = ColumnsType extends (infer R)[] ? R : never;
-
+type ATable = typeof table;
+type Config = TConfig<ATable>;
+//   ^?
+type Extensions = TExtensions<ATable>;
+//   ^?
+type HeadType = THead<ATable>;
+//   ^?
+type BodyType = TBody<ATable>;
+//   ^?
+type FooterType = TFooter<ATable>;
+//   ^?
+type headValue = THeadValue<ATable>;
+//   ^?
+type bodyValue = TBodyValue<ATable>;
+//   ^?
+type footerValue = TFooterValue<ATable>;
 //   ^?
