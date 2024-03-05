@@ -6,12 +6,12 @@ export class PaginationPlugin extends BoringPlugin {
     return 'pagination-plugin';
   }
   priority = 100;
-  table?: GenericBoringTable;
+  table!: GenericBoringTable;
   pageSize = 10;
   currentPage = 1;
   total = 0;
   totalPages = 0;
-  private dataCopy: any[] = [];
+  page: GenericBoringTable['body'] = [];
 
   constructor(pageSize: number) {
     super();
@@ -20,57 +20,83 @@ export class PaginationPlugin extends BoringPlugin {
   }
 
   configure(table: GenericBoringTable) {
+    if (!table) throw new Error('Table is required');
     this.table = table;
-    this.dataCopy = table.data;
     this.total = this.table.data.length;
     this.totalPages = Math.ceil(this.total / this.pageSize);
     this.debug('Plugin configured');
     return {};
   }
 
-  onChangeData(data: GenericBoringTable['data']) {
-    this.dataCopy = data;
+  onUpdateData(data: GenericBoringTable['data']) {
     this.total = data.length;
     this.totalPages = Math.ceil(this.total / this.pageSize);
-    this.currentPage = 1;
+    if (this.currentPage > this.totalPages) this.currentPage = 1;
+    this.updatePage();
   }
 
-  beforeCreateBodyRows(): void {
-    if (!this.table) return;
-    this.total = this.dataCopy.length;
+  updatePage(rows?: GenericBoringTable['body']) {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = this.currentPage * this.pageSize;
+    this.page = (rows ?? this.table.body).slice(start, end);
+    this.table.dispatch('update:extensions');
+  }
+
+  afterCreateBodyRows(rows: GenericBoringTable['body']): void {
+    this.total = this.table.body.length;
     this.totalPages = Math.ceil(this.total / this.pageSize);
     const start = (this.currentPage - 1) * this.pageSize;
     const end = this.currentPage * this.pageSize;
-    this.table.data = this.dataCopy.slice(start, end);
+    this.page = (rows ?? this.table.body).slice(start, end);
+    this.table.dispatch('update:extensions');
   }
 
-  afterCreateBodyRows(): void {
-    if (!this.table) return;
-    this.table.data = this.dataCopy;
-    console.log('chamou');
+  onUpdateBodyRows() {
+    this.table.dispatch('update:extensions');
+  }
+
+  onUpdateBodyRow() {
+    this.table.dispatch('update:extensions');
+  }
+
+  onUpdateBodyCell() {
+    this.table.dispatch('update:extensions');
   }
 
   setPage = (page: number) => {
-    if (!this.table) return;
     this.currentPage = page;
-    this.table.dispatch('create:body-rows');
+    this.updatePage();
+    this.table.dispatch('update:extensions');
   };
 
   nextPage = () => {
-    if (!this.table) return;
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
-      this.table.dispatch('create:body-rows');
+      this.updatePage();
+      this.table.dispatch('update:extensions');
     }
   };
 
   prevPage = () => {
-    if (!this.table) return;
     if (this.currentPage > 1) {
       this.currentPage--;
-      this.table.dispatch('create:body-rows');
+      this.updatePage();
+      this.table.dispatch('update:extensions');
     }
   };
+
+  onUpdateExtensions(extensions: GenericBoringTable['extensions']) {
+    Object.assign(extensions, {
+      setPage: this.setPage,
+      nextPage: this.nextPage,
+      prevPage: this.prevPage,
+      currentPage: this.currentPage,
+      totalPages: this.totalPages,
+      totalItems: this.total,
+      pageSize: this.pageSize,
+      page: this.page,
+    });
+  }
 
   extend() {
     return {
@@ -80,7 +106,8 @@ export class PaginationPlugin extends BoringPlugin {
       currentPage: this.currentPage,
       totalPages: this.totalPages,
       totalItems: this.total,
-      rawData: this.dataCopy,
+      pageSize: this.pageSize,
+      page: this.page,
     };
   }
 }
