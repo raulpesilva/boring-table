@@ -1,5 +1,5 @@
-import { BoringTable } from './core';
-import { ChangePlugin, CheckPlugin, PaginationPlugin } from './plugins';
+import { BoringTable, TConfig } from './core';
+import { CheckPlugin, HiddenRowPlugin } from './plugins';
 import { enableDebug } from './utils';
 export { BoringTable } from './core';
 // adicionar memo para evitar re-render desnecessário
@@ -14,7 +14,7 @@ type Data = { id: string; name: string; age: number };
 //   { id: '2', name: 'Mary', age: 20 },
 // ];
 
-const data: Data[] = Array.from({ length: 1_000_000 }, (_, i) => ({
+const data: Data[] = Array.from({ length: 2_000_000 }, (_, i) => ({
   id: `id-${i.toString()}`,
   name: `Name ${i}`,
   age: i,
@@ -28,9 +28,9 @@ const table = new BoringTable({
   columns: [
     {
       type: 'name1',
-      head: [(_e, _t) => 1, () => 'head 1'],
-      body: (arg, _e) => arg.id,
-      footer: (_arg, _e) => 'footer 1',
+      head: [(_e, _t) => true, () => 'head 1'],
+      body: (item, _e, _t) => item.id,
+      footer: (_e, _t) => 'footer 1',
     },
     {
       type: 'name2',
@@ -46,12 +46,12 @@ const table = new BoringTable({
   ],
 
   plugins: [
-    // new HiddenRowPlugin(),
+    new HiddenRowPlugin(),
     new CheckPlugin(),
-    new ChangePlugin<Data>(),
+    // new ChangePlugin<Data>(),
     // new FilterPlugin<Data>((param, value) => value.name.includes(param)),
     // new SwapRowPlugin(),
-    new PaginationPlugin(4),
+    // new PaginationPlugin(4),
   ],
 });
 
@@ -111,10 +111,16 @@ const run = async () => {
   // table.body[table.body.length - 1]?.toggleCheck();
   // table.body[table.body.length - 1]?.toggleCheck();
   // await table.waitForUpdates();
-  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  // console.log('check', table.body[table.body.length - 1]?.check);
-  // table.body[table.body.length - 1]?.toggleCheck();
-  // await table.waitForUpdates();
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  console.log('check', table.body[table.body.length - 1]?.check);
+  for (let i = 1; i <= 3; i++) {
+    table.body[table.body.length - i]?.toggleCheck();
+  }
+  await table.waitForUpdates();
+  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  for (let i = 1; i <= 3; i++) {
+    console.log('check', table.body[table.body.length - i]?.check);
+  }
   // console.log('check', table.body[table.body.length - 1]?.check);
   // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   // // table.extensions.nextPage();
@@ -133,16 +139,16 @@ const run = async () => {
   // await table.waitForUpdates();
   // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   // await table.waitForUpdates();
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  console.log('head length     :', table.head.length);
-  console.log('head row length :', table.head[0]?.cells.length);
-  console.log('body row length :', table.body.length);
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('head length     :', table.head.length);
+  // console.log('head row length :', table.head[0]?.cells.length);
+  // console.log('body row length :', table.body.length);
 
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
-  console.log('extensions page:', table.extensions);
-  console.log('page length     :', table.extensions.page.length);
-  console.log('page row length :', table.extensions.page[0]?.cells.length);
-  console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
+  // console.log('extensions page:', table.extensions);
+  // console.log('page length     :', table.extensions.page.length);
+  // console.log('page row length :', table.extensions.page[0]?.cells.length);
+  // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
   // console.log('\x1B[35m-----------##-----------', '\x1b[0m');
@@ -184,24 +190,24 @@ const run = async () => {
 };
 run();
 
-// type ATable = typeof table;
-// type Config = TConfig<ATable>;
-// type Plugins = TPlugins<ATable>;
-// //   ^?
-// type Extensions = TExtensions<ATable>;
-// //   ^?
-// type HeadType = THead<ATable>;
-// //   ^?
-// type BodyType = TBody<ATable>;
-// //   ^?
-// type FooterType = TFooter<ATable>;
-// //   ^?
-// type headValue = THeadValue<ATable>;
-// //   ^?
-// type bodyValue = TBodyValue<ATable>;
-// //   ^?
-// type footerValue = TFooterValue<ATable>;
-// //   ^?
+type ATable = typeof table;
+type _Config = TConfig<ATable>;
+// export type _Plugins = TPlugins<ATable>;
+// //           ^?
+// export type _Extensions = TExtensions<ATable>;
+// //           ^?
+// export type _HeadType = THead<ATable>;
+// //           ^?
+// export type _BodyType = TBody<ATable>;
+// //           ^?
+// export type _FooterType = TFooter<ATable>;
+// //           ^?
+// export type _headValue = THeadValue<ATable>;
+// //           ^?
+// export type _bodyValue = TBodyValue<ATable>;
+// //           ^?
+// export type _footerValue = TFooterValue<ATable>;
+// //           ^?
 // class A {
 //   test() {
 //     return { a: 1 };

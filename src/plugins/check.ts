@@ -58,12 +58,12 @@ export class CheckPlugin extends BoringPlugin {
     return {} as { check: boolean; toggleCheck: () => void };
   }
 
-  // onCreateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {
-  //   return {
-  //     check: this.cells?.[cell.rowIndex]?.[cell.index],
-  //     toggleCheck: () => this.toggleCheckCell(cell.rowIndex, cell.index),
-  //   };
-  // }
+  onCreateHeadCell(cell: BoringTable['head'][number]['cells'][number]) {
+    return {
+      check: !!cell.check,
+      toggleCheck: () => {},
+    };
+  }
 
   // onCreateBodyCell(cell: BoringTable['body'][number]['cells'][number]) {
   //   cell.check = !!this.columns?.[cell.rowIndex]?.[cell.index];

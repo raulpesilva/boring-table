@@ -15,7 +15,7 @@ export class ChangePlugin<T> extends BoringPlugin {
 
   configure(table: GenericBoringTable) {
     this.table = table;
-    this.initialData = [...table.data];
+    this.initialData = table.data;
     this.debug('Plugin configured');
     return {};
   }
@@ -36,6 +36,7 @@ export class ChangePlugin<T> extends BoringPlugin {
       return await this.table?.waitForUpdates();
     };
   };
+
   onCreateBodyRow(row: BoringTable['body'][number]) {
     return { change: this.change(row) };
   }

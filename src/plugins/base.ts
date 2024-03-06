@@ -123,7 +123,7 @@ export interface IBoringPlugin {
   onUpdateFooterCell: (cell: any) => any;
 }
 
-export class BoringPlugin implements IBoringPlugin {
+export abstract class BoringPlugin implements IBoringPlugin {
   get name(): string {
     throw new Error('Plugin must override "name"');
   }

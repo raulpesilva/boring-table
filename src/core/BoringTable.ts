@@ -2,7 +2,6 @@ import type { Except, Simplify, UnionToIntersection } from 'type-fest';
 import { IBoringPlugin } from '../plugins/base';
 import { BoringEvent, BoringEvents } from './BoringEvents';
 
-
 // definir melhor os momentos e os eventos
 // para cada momento definir evento para antes e depois
 // e definir como trata-los
@@ -28,34 +27,22 @@ type Row<TCellValue, TCellExtra extends Record<string, any>, TRowExtra extends R
 
 type ExtractPluginMethod<T extends IBoringPlugin[], K extends keyof T[number]> = Extract<T[number], Record<K, any>>[K];
 type ComposePluginMethod<T extends IBoringPlugin[], K extends keyof T[number]> = Simplify<
-  UnionToIntersection<ReturnType<ExtractPluginMethod<T, K>>>
+  UnionToIntersection<ReturnType<ExtractPluginMethod<T, K>> | { id: string }>
 >;
 
-type Column<TValue extends any[], TPlugins extends IBoringPlugin[] = IBoringPlugin[]> = {
+export type Column<TValue extends any[], TPlugins extends IBoringPlugin[] = IBoringPlugin[]> = {
   type?: string;
   head:
-    | ((
-        extra: ComposePluginMethod<TPlugins, 'onCreateHeadCell'> & { id: string },
-        table: BoringTable<TValue, TPlugins>
-      ) => any)
-    | ((
-        extra: ComposePluginMethod<TPlugins, 'onCreateHeadCell'> & { id: string },
-        table: BoringTable<TValue, TPlugins>
-      ) => any)[];
+    | ((extra: ComposePluginMethod<TPlugins, 'onCreateHeadCell'>, table: BoringTable<TValue, TPlugins>) => any)
+    | ((extra: ComposePluginMethod<TPlugins, 'onCreateHeadCell'>, table: BoringTable<TValue, TPlugins>) => any)[];
   body: (
     arg: TValue,
-    extra: ComposePluginMethod<TPlugins, 'onCreateBodyCell'> & { id: string },
+    extra: ComposePluginMethod<TPlugins, 'onCreateBodyCell'>,
     table: BoringTable<TValue, TPlugins>
   ) => any;
   footer?:
-    | ((
-        extra: ComposePluginMethod<TPlugins, 'onCreateFooterCell'> & { id: string },
-        table: BoringTable<TValue, TPlugins>
-      ) => any)
-    | ((
-        extra: ComposePluginMethod<TPlugins, 'onCreateFooterCell'> & { id: string },
-        table: BoringTable<TValue, TPlugins>
-      ) => any)[];
+    | ((extra: ComposePluginMethod<TPlugins, 'onCreateFooterCell'>, table: BoringTable<TValue, TPlugins>) => any)
+    | ((extra: ComposePluginMethod<TPlugins, 'onCreateFooterCell'>, table: BoringTable<TValue, TPlugins>) => any)[];
 };
 
 type ExtractColumn<
@@ -97,7 +84,7 @@ export class BoringTable<
 
   events: BoringEvents;
 
-  plugins: TPlugins = [] as any ;
+  plugins: TPlugins = [] as any;
   config!: UnionToIntersection<ReturnType<TPlugins[number]['configure']>>;
   extensions!: UnionToIntersection<ReturnType<TPlugins[number]['extend']>>;
 

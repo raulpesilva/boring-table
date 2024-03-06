@@ -30,17 +30,9 @@ export class FilterPlugin<T> extends BoringPlugin {
     this.table?.dispatch('update:data');
   };
 
-  action = () => {
-    if (!this.param) {
-      this.filteredData = this.initialData;
-      if (this.table) this.table.data = this.initialData;
-      return;
-    }
-    this.filteredData = this.initialData.filter((item) => this.userFilter(this.param, item));
-    if (this.table) this.table.data = this.filteredData;
-  };
-
   extend() {
     return { filter: this.filter };
   }
+
+
 }
