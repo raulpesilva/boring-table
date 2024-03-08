@@ -1,4 +1,4 @@
-import { BoringTable, GenericBoringTable } from '../core';
+import { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class CheckPlugin extends BoringPlugin {
@@ -17,7 +17,7 @@ export class CheckPlugin extends BoringPlugin {
     this.debug('Plugin initialized');
   }
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     this.table = table;
     this.debug('Plugin configured');
     return {};
@@ -46,10 +46,18 @@ export class CheckPlugin extends BoringPlugin {
     row.toggleCheck = () => this.toggleHead(row);
     return {} as { check: boolean; toggleCheck: () => void };
   }
+  count = 0;
   onCreateBodyRow(row: BoringTable['body'][number]) {
     row.check = !!row.check;
     row.toggleCheck = () => this.toggleBody(row);
+    this.count++;
+    console.log({ count: this.count });
     return {} as { check: boolean; toggleCheck: () => void };
+  }
+
+  onUpdateBodyRow(row: BoringTable['body'][number]): void {
+    row.check = !!row.check;
+    row.toggleCheck = () => this.toggleBody(row);
   }
 
   onCreateFooterRow(row: BoringTable['footer'][number]) {

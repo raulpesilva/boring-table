@@ -1,4 +1,4 @@
-import type { BoringTable, GenericBoringTable } from '../core';
+import type { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class ChangePlugin<T> extends BoringPlugin {
@@ -13,16 +13,16 @@ export class ChangePlugin<T> extends BoringPlugin {
     this.debug('Plugin initialized');
   }
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     this.table = table;
     this.initialData = table.data;
     this.debug('Plugin configured');
     return {};
   }
 
-  changeData(position: number, data: BoringTable['data'][number]) {
-    if (this.table) this.table.data[position] = data;
-    this.table?.dispatch('update:data');
+  changeData(rowIndex: number, data: BoringTable['data'][number]) {
+    if (this.table) this.table.data[rowIndex] = data;
+    this.table?.dispatch('update:body-row', { rowIndex });
   }
 
   unwrapData(data: T | ((prev: T) => T), prev: T) {
@@ -39,6 +39,9 @@ export class ChangePlugin<T> extends BoringPlugin {
 
   onCreateBodyRow(row: BoringTable['body'][number]) {
     return { change: this.change(row) };
+  }
+  onUpdateBodyRow(row: BoringTable['body'][number]) {
+    row.change = this.change(row);
   }
 
   onReset() {

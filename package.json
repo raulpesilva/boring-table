@@ -16,14 +16,13 @@
   "unpkg": "dist/index.global.js",
   "sideEffects": false,
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "start": "tsup",
     "dev": "tsup --watch",
-    "dev:local": "tsx src/index.ts",
-    "dev:local:watch": "tsx watch --ignore ./node_modules src/index.ts",
+    "dev:local": "tsx run.ts",
+    "dev:local:watch": "tsx watch --ignore ./node_modules run.ts",
     "build": "tsup --minify",
     "test": "vitest",
     "coverage": "vitest run --coverage",

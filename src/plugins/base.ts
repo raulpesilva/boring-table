@@ -1,4 +1,5 @@
-import type { BoringTable, GenericBoringTable } from '../core';
+import type { BoringTable } from '../core';
+import { BoringEvents } from '../core/BoringEvents';
 import { isDebugEnabled } from '../utils';
 
 // definir melhor os momentos e os eventos
@@ -74,18 +75,18 @@ export interface IBoringPlugin {
   onUpdateColumn: (column: any, index: number) => void;
 
   // 'events'
-  onUpdateEvents: (events: GenericBoringTable['events']) => void;
+  onUpdateEvents: (events: BoringEvents) => void;
 
   // 'plugins'
   onUpdatePlugins: (plugins: any[]) => void;
 
   // 'config'
   configure: (table: any) => any;
-  onUpdateConfig: (config: GenericBoringTable['config']) => void;
+  onUpdateConfig: (config: Record<string,any>) => void;
 
   // 'extensions'
   extend: () => any;
-  onUpdateExtensions: (extensions: GenericBoringTable['extensions']) => void;
+  onUpdateExtensions: (extensions: Record<string,any>) => void;
 
   // 'head'
   beforeCreateHeadRows: (data: any[]) => void;

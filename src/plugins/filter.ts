@@ -1,4 +1,4 @@
-import { BoringTable, GenericBoringTable } from '../core';
+import { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class FilterPlugin<T> extends BoringPlugin {
@@ -18,7 +18,7 @@ export class FilterPlugin<T> extends BoringPlugin {
     this.debug('Plugin initialized');
   }
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     this.table = table;
     this.initialData = [...this.table.data];
     this.debug('Plugin configured');
@@ -33,6 +33,4 @@ export class FilterPlugin<T> extends BoringPlugin {
   extend() {
     return { filter: this.filter };
   }
-
-
 }

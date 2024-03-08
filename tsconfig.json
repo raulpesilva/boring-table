@@ -20,5 +20,5 @@
     "declarationMap": true,
     "declaration": true
   },
-  "include": ["src"]
+  "include": ["src", "run.ts"]
 }
