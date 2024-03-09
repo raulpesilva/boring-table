@@ -1,3 +1,4 @@
+export type { IBoringPlugin } from './base';
 export * from './change';
 export * from './check';
 export * from './filter';

@@ -1,4 +1,4 @@
-import { BoringTable, GenericBoringTable } from '../core';
+import { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class SwapRowPlugin extends BoringPlugin {
@@ -8,7 +8,7 @@ export class SwapRowPlugin extends BoringPlugin {
 
   table?: BoringTable;
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     this.table = table;
     return {};
   }

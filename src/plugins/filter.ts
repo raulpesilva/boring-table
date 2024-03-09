@@ -1,4 +1,4 @@
-import { BoringTable, GenericBoringTable } from '../core';
+import { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class FilterPlugin<T> extends BoringPlugin {
@@ -18,7 +18,7 @@ export class FilterPlugin<T> extends BoringPlugin {
     this.debug('Plugin initialized');
   }
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     this.table = table;
     this.initialData = [...this.table.data];
     this.debug('Plugin configured');
@@ -28,16 +28,6 @@ export class FilterPlugin<T> extends BoringPlugin {
   filter = (value: string) => {
     this.param = value;
     this.table?.dispatch('update:data');
-  };
-
-  action = () => {
-    if (!this.param) {
-      this.filteredData = this.initialData;
-      if (this.table) this.table.data = this.initialData;
-      return;
-    }
-    this.filteredData = this.initialData.filter((item) => this.userFilter(this.param, item));
-    if (this.table) this.table.data = this.filteredData;
   };
 
   extend() {

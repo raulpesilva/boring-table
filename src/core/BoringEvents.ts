@@ -136,6 +136,7 @@ const CancelEvents: Record<keyof BoringEvent, Partial<keyof BoringEvent>[]> = {
 
 interface BoringEventsOptions {
   process: () => void;
+  initialEvents?: [keyof BoringEvent, BoringEvent[keyof BoringEvent]][];
 }
 
 export class BoringEvents {
@@ -145,6 +146,7 @@ export class BoringEvents {
 
   constructor(options: BoringEventsOptions) {
     this.process = options.process;
+    if (options.initialEvents) for (const [event, payload] of options.initialEvents) this.upsetEvent(event, payload);
   }
 
   upsetEvent<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
@@ -160,6 +162,7 @@ export class BoringEvents {
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
     // TODO: melhorar os eventos para quando um evento for disparado, nao adicionar um evento que ja é atendido por outro evento
     // nao apenas cancelar os eventos anteriores
+    
     console.log('\x1B[34m>--------------------------------->>', '\x1b[0m');
     this.upsetEvent(event, payload);
     if (this.hasScheduledUpdate) return;

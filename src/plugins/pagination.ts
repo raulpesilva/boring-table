@@ -1,4 +1,4 @@
-import { GenericBoringTable } from '../core';
+import { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class PaginationPlugin extends BoringPlugin {
@@ -6,12 +6,12 @@ export class PaginationPlugin extends BoringPlugin {
     return 'pagination-plugin';
   }
   priority = -1;
-  table!: GenericBoringTable;
+  table!: BoringTable;
   pageSize = 10;
   currentPage = 1;
   total = 0;
   totalPages = 0;
-  page: GenericBoringTable['body'] = [];
+  page: BoringTable['body'] = [];
 
   constructor(pageSize: number) {
     super();
@@ -19,7 +19,7 @@ export class PaginationPlugin extends BoringPlugin {
     this.debug('Plugin initialized');
   }
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     if (!table) throw new Error('Table is required');
     this.table = table;
     this.total = this.table.data.length;
@@ -28,21 +28,21 @@ export class PaginationPlugin extends BoringPlugin {
     return {};
   }
 
-  onUpdateData(data: GenericBoringTable['data']) {
+  onUpdateData(data: BoringTable['data']) {
     this.total = data.length;
     this.totalPages = Math.ceil(this.total / this.pageSize);
     if (this.currentPage > this.totalPages) this.currentPage = 1;
     this.updatePage();
   }
 
-  updatePage(rows?: GenericBoringTable['body']) {
+  updatePage(rows?: BoringTable['body']) {
     const start = (this.currentPage - 1) * this.pageSize;
     const end = this.currentPage * this.pageSize;
     this.page = (rows ?? this.table.body).slice(start, end);
     this.table.dispatch('update:extensions');
   }
 
-  afterCreateBodyRows(rows: GenericBoringTable['body']): void {
+  afterCreateBodyRows(rows: BoringTable['body']): void {
     this.total = this.table.body.length;
     this.totalPages = Math.ceil(this.total / this.pageSize);
     this.updatePage(rows);
@@ -82,7 +82,7 @@ export class PaginationPlugin extends BoringPlugin {
     }
   };
 
-  onUpdateExtensions(extensions: GenericBoringTable['extensions']) {
+  onUpdateExtensions(extensions: BoringTable['extensions']) {
     Object.assign(extensions, {
       setPage: this.setPage,
       nextPage: this.nextPage,

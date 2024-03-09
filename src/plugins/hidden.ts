@@ -1,4 +1,4 @@
-import { BoringTable, GenericBoringTable } from '../core';
+import { BoringTable } from '../core';
 import { BoringPlugin } from './base';
 
 export class HiddenRowPlugin extends BoringPlugin {
@@ -13,7 +13,7 @@ export class HiddenRowPlugin extends BoringPlugin {
     this.debug('Plugin initialized');
   }
 
-  configure(table: GenericBoringTable) {
+  configure(table: BoringTable) {
     this.table = table;
     this.debug('Plugin configured');
     return {};
