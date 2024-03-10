@@ -1,3 +1,45 @@
-export * from 'boring-table';
+export {
+  BoringTable,
+  ChangePlugin,
+  CheckPlugin,
+  FilterPlugin,
+  HiddenRowPlugin,
+  PaginationPlugin,
+  SwapRowPlugin,
+  createBoringTable,
+  createColumns,
+  enableDebug,
+  isDebugEnabled,
+  memo
+} from 'boring-table';
+export type {
+  ArrayOrFunction,
+  BoringBody,
+  BoringColumn,
+  BoringFooter,
+  BoringHead,
+  BoringTableOptions,
+  BoringTableType,
+  ExtractExtra,
+  ExtractMethod,
+  FooterColumn,
+  HeaderColumn,
+  IBoringPlugin,
+  ReturnMethodValue,
+  Simplify,
+  TBody,
+  TBodyValue,
+  TColumns,
+  TConfig,
+  TData,
+  TExtensions,
+  TFooter,
+  TFooterValue,
+  THead,
+  THeadValue,
+  TPlugins,
+  UnionToIntersection,
+  UnwrapArray
+} from 'boring-table';
 export * from './useTable';
 
