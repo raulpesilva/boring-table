@@ -145,13 +145,11 @@ export class BoringTable<
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
     this.events.dispatch(event, payload);
   }
-
   setData(data: TData) {
     this.data = data;
     this.dispatch('update:data');
     this.dispatch('create:body-rows');
   }
-
   setOptions(options: Partial<BoringTableOptions<TData, TPlugins, TColumns>>) {
     if (options.data) this.data = options.data;
     if (options.getId) this.getId = options.getId;
