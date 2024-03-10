@@ -1,5 +1,13 @@
 # react-boring-table
 
+## 0.0.6
+
+### Patch Changes
+
+- update logo path
+- Updated dependencies
+  - boring-table@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes

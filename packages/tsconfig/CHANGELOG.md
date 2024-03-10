@@ -1,5 +1,11 @@
 # tsconfig
 
+## 0.0.6
+
+### Patch Changes
+
+- update logo path
+
 ## 0.0.5
 
 ### Patch Changes
