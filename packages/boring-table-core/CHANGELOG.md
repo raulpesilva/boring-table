@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.0.4
+
+### Patch Changes
+
+- re export features
+
 ## 0.0.3
 
 ### Patch Changes
