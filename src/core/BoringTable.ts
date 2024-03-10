@@ -100,7 +100,8 @@ export class BoringTable<
   TPlugins extends any[] = any[],
   TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
 > {
-  onChange: (table: BoringTable<TData, TPlugins, TColumns>) => void = () => {};
+  numberOfUpdates = 0;
+  onChange: () => void = () => {};
   getId: (arg: TData[number]) => string;
 
   data: TData = [] as unknown as TData;
@@ -135,11 +136,31 @@ export class BoringTable<
     this.events.clear();
   }
 
-  setOnChange(cb: (table: BoringTable<TData, TPlugins, TColumns>) => void) {
+  setOnChange(cb: () => void) {
     this.onChange = cb;
+    return () => {
+      this.onChange = () => {};
+    };
   }
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
     this.events.dispatch(event, payload);
+  }
+
+  setData(data: TData) {
+    this.data = data;
+    this.dispatch('update:data');
+    this.dispatch('create:body-rows');
+  }
+
+  setOptions(options: Partial<BoringTableOptions<TData, TPlugins, TColumns>>) {
+    if (options.data) this.data = options.data;
+    if (options.getId) this.getId = options.getId;
+    if (options.columns) this.columns = options.columns;
+    if (options.plugins) this.plugins = options.plugins;
+    this.dispatch('create:all');
+    this.composeColumns();
+    this.configure();
+    this.process();
   }
 
   composeColumns() {
@@ -257,8 +278,10 @@ export class BoringTable<
     if (this.events.has('update:config')) this.updateConfig();
     if (this.events.has('update:extensions')) this.updateExtensions();
     if (this.events.has('update:events')) this.updateEvents();
-    this.onChange?.(this);
+    this.numberOfUpdates++;
+    this.onChange?.();
     console.timeEnd('\x1B[34mprocess');
+    console.log('numberOfUpdates', this.numberOfUpdates);
   }
   reset() {
     this.events.clear();
