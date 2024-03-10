@@ -1,6 +1,6 @@
 {
   "name": "boring-table",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "author": "raulpesilva",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "build": "tsup --minify",
     "start": "tsup",
     "dev": "tsup --watch",
-    "clean": "rimraf ./dist && rimraf ./coverage",
+    "clean": "rimraf ./dist && rimraf ./coverage && rimraf ./node_modules",
     "lint": "tsc .",
     "test": "vitest run",
     "test:watch": "vitest",

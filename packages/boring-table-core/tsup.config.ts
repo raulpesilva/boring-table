@@ -2,7 +2,7 @@ import { defineConfig } from 'tsup';
 
 export default defineConfig({
   entryPoints: ['src/*.ts'],
-  format: ['cjs', 'esm', 'iife'],
+  format: ['cjs', 'esm'],
   dts: { compilerOptions: { declaration: true, declarationMap: true } },
   sourcemap: true,
   clean: true,

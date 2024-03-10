@@ -1,6 +1,6 @@
 {
   "name": "react-boring-table",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "author": "raulpesilva",
   "license": "MIT",
@@ -34,7 +34,7 @@
     "build": "tsup --minify",
     "start": "tsup",
     "dev": "tsup --watch",
-    "clean": "rimraf ./dist && rimraf ./coverage",
+    "clean": "rimraf ./dist && rimraf ./coverage && rimraf ./node_modules",
     "lint": "tsc .",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -47,6 +47,8 @@
     "boring-table": "workspace:*"
   },
   "devDependencies": {
+    "@types/react": "^18.2.64",
+    "react": "^18.2.0",
     "tsconfig": "workspace:*"
   },
   "peerDependencies": {

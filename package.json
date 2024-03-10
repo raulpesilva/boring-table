@@ -8,7 +8,11 @@
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "coverage": "turbo run coverage",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "clean": "turbo run clean",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo run build --filter=docs^... && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

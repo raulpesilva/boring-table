@@ -1,4 +1,5 @@
-import { BoringColumn, BoringTableOptions, IBoringPlugin } from 'boring-table';
+import { BoringColumn, BoringTableOptions, IBoringPlugin, createBoringTable } from 'boring-table';
+import React from 'react';
 
 export const useTable = <
   TData extends any[] = any,
