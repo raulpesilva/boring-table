@@ -1,3 +1,4 @@
+import { IBoringPlugin } from '../plugins';
 import { BoringEvent, BoringEvents } from './BoringEvents';
 
 export type UnionToIntersection<Union> = (Union extends unknown ? (distributedUnion: Union) => void : never) extends (
@@ -536,3 +537,17 @@ export class BoringTable<
     for (let index = 0; index < this.footer.length; index++) this.updateFooterRow(index);
   }
 }
+
+const createBoringColumns = <
+  TData extends any[] = any,
+  const TPlugins extends IBoringPlugin[] = IBoringPlugin[],
+  const TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+>({
+  data: _,
+  ...options
+}: Omit<BoringTableOptions<TData, TPlugins, TColumn>, 'data'> & { data?: TData }): Omit<
+  BoringTableOptions<TData, TPlugins, TColumn>,
+  'data'
+> => {
+  return options;
+};
