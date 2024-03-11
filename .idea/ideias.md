@@ -2,9 +2,10 @@
 
 ## TODO
 
-deixar head opcional
 adicionar returnType dos updates e fazer com que adicione com Object Assign
 deixar os methodos dos plugins opcionais
+mudar createColumns para create Options
+adicionar row como parametro
 
 `createColumns<TData, TPlugins>`
 `createTable<TData,TPlugins,TColumns>`

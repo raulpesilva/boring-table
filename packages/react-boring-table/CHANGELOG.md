@@ -1,5 +1,26 @@
 # react-boring-table
 
+## 0.0.7
+
+### Patch Changes
+
+- add custom body
+  add pagination
+  add filter
+
+  fix types
+
+- Updated dependencies
+  - boring-table@0.0.7
+
+## 0.0.6
+
+### Patch Changes
+
+- update logo path
+- Updated dependencies
+  - boring-table@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes

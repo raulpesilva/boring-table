@@ -1,110 +1,75 @@
-import { BoringTable } from '../core';
-import { BoringPlugin } from './base';
+import { BoringColumn, BoringTable } from '../core';
+import { BoringPlugin, IBoringPlugin } from './base';
 
-export class PaginationPlugin extends BoringPlugin {
+export class PaginationPlugin<
+  TData extends any[] = any,
+  const TPlugins extends IBoringPlugin[] = IBoringPlugin[],
+  const TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+> extends BoringPlugin {
   get name() {
     return 'pagination-plugin';
   }
-  priority = -1;
-  table!: BoringTable;
-  pageSize = 10;
-  currentPage = 1;
-  total = 0;
-  totalPages = 0;
-  page: BoringTable['body'] = [];
+  priority = 10;
+  table!: BoringTable<TData, TPlugins, TColumns>;
+  page = 1;
+  pageSize = 0;
+  lastPage = 0;
+  totalItems = 0;
 
-  constructor(pageSize: number) {
+  constructor(options: { page?: number; pageSize?: number }) {
     super();
-    this.pageSize = pageSize;
-    this.debug('Plugin initialized');
+    if (options.page) this.page = options.page;
+    if (options.pageSize) this.pageSize = options.pageSize;
   }
 
-  configure(table: BoringTable) {
-    if (!table) throw new Error('Table is required');
+  configure(table: BoringTable<TData, TPlugins, TColumns>) {
     this.table = table;
-    this.total = this.table.data.length;
-    this.totalPages = Math.ceil(this.total / this.pageSize);
-    this.debug('Plugin configured');
     return {};
   }
 
-  onUpdateData(data: BoringTable['data']) {
-    this.total = data.length;
-    this.totalPages = Math.ceil(this.total / this.pageSize);
-    if (this.currentPage > this.totalPages) this.currentPage = 1;
-    this.updatePage();
+  afterCreateBodyRows() {
+    if (this.pageSize === 0) this.pageSize = this.table.customBody.length;
+    this.table.dispatch('update:extensions');
+    return {};
   }
 
-  updatePage(rows?: BoringTable['body']) {
-    const start = (this.currentPage - 1) * this.pageSize;
-    const end = this.currentPage * this.pageSize;
-    this.page = (rows ?? this.table.body).slice(start, end);
+  onUpdateCustomBody() {
+    console.log('onUpdateCustomBody', this.page, this.pageSize, this.table.customBody.length);
+    if (this.table.customBody.length !== this.totalItems) this.page = 1;
+    this.totalItems = this.table.customBody.length;
+    this.lastPage = Math.ceil(this.totalItems / this.pageSize);
+    this.table.customBody = this.table.customBody.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
     this.table.dispatch('update:extensions');
   }
 
-  afterCreateBodyRows(rows: BoringTable['body']): void {
-    this.total = this.table.body.length;
-    this.totalPages = Math.ceil(this.total / this.pageSize);
-    this.updatePage(rows);
-  }
-
-  onUpdateBodyRows() {
+  nextPage() {
+    console.log('nextPage', this.page, this.lastPage);
+    if (this.page >= this.lastPage) return;
+    this.page++;
+    this.table.dispatch('update:custom-body');
     this.table.dispatch('update:extensions');
   }
 
-  onUpdateBodyRow() {
+  prevPage() {
+    console.log('prevPage', this.page, this.lastPage);
+    if (this.page <= 1) return;
+    this.page--;
+    this.table.dispatch('update:custom-body');
     this.table.dispatch('update:extensions');
   }
 
-  onUpdateBodyCell() {
-    this.table.dispatch('update:extensions');
-  }
-
-  setPage = (page: number) => {
-    this.currentPage = page;
-    this.updatePage();
-    this.table.dispatch('update:extensions');
-  };
-
-  nextPage = () => {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.updatePage();
-      this.table.dispatch('update:extensions');
-    }
-  };
-
-  prevPage = () => {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.updatePage();
-      this.table.dispatch('update:extensions');
-    }
-  };
-
-  onUpdateExtensions(extensions: BoringTable['extensions']) {
-    Object.assign(extensions, {
-      setPage: this.setPage,
-      nextPage: this.nextPage,
-      prevPage: this.prevPage,
-      currentPage: this.currentPage,
-      totalPages: this.totalPages,
-      totalItems: this.total,
-      pageSize: this.pageSize,
-      page: this.page,
-    });
+  onUpdateExtensions(extensions: BoringTable<TData, TPlugins, TColumns>['extensions']): void {
+    Object.assign(extensions, this.extend());
   }
 
   extend() {
     return {
-      setPage: this.setPage,
-      nextPage: this.nextPage,
-      prevPage: this.prevPage,
-      currentPage: this.currentPage,
-      totalPages: this.totalPages,
-      totalItems: this.total,
-      pageSize: this.pageSize,
       page: this.page,
+      totalItems: this.totalItems,
+      pageSize: this.pageSize,
+      lastPage: this.lastPage,
+      nextPage: this.nextPage.bind(this),
+      prevPage: this.prevPage.bind(this),
     };
   }
 }

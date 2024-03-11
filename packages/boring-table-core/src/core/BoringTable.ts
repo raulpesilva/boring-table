@@ -1,4 +1,3 @@
-import { IBoringPlugin } from '../plugins';
 import { BoringEvent, BoringEvents } from './BoringEvents';
 
 export type UnionToIntersection<Union> = (Union extends unknown ? (distributedUnion: Union) => void : never) extends (
@@ -8,18 +7,18 @@ export type UnionToIntersection<Union> = (Union extends unknown ? (distributedUn
   : never;
 export type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};
 
-interface BaseCell {
+export interface BaseCell {
   id: string;
   rawId: string;
   index: number;
   rowIndex: number;
 }
 
-interface Cell<TData> extends BaseCell {
+export interface Cell<TData> extends BaseCell {
   value: TData;
 }
 
-interface BaseRow<TData extends any, TExtra extends Record<string, any>> {
+export interface BaseRow<TData extends any, TExtra extends Record<string, any>> {
   id: string;
   rawId: string;
   index: number;
@@ -36,23 +35,23 @@ export type ExtractExtra<T extends any[], K extends keyof T[number]> = UnionToIn
   ReturnMethodValue<T, K> | BaseCell
 >;
 
-type CreateBodyCell<TData extends any[], TPlugins extends any[] = any[]> = (
+export type CreateBodyCell<TData extends any[], TPlugins extends any[] = any[]> = (
   item: TData[number],
   extra: Simplify<UnionToIntersection<ReturnMethodValue<TPlugins, 'onCreateBodyCell'> | BaseCell>>,
   table: BoringTable<TData, TPlugins, any>
 ) => any;
 
-type CreateHeadCell<TData extends any[], TPlugins extends any[] = any[]> = ArrayOrFunction<
+export type CreateHeadCell<TData extends any[], TPlugins extends any[] = any[]> = ArrayOrFunction<
   (extra: Simplify<ExtractExtra<TPlugins, 'onCreateHeadCell'>>, table: BoringTable<TData, TPlugins, any>) => any
 >;
 
-type CreateFooterCell<TData extends any[], TPlugins extends any[] = any[]> = ArrayOrFunction<
+export type CreateFooterCell<TData extends any[], TPlugins extends any[] = any[]> = ArrayOrFunction<
   (extra: Simplify<ExtractExtra<TPlugins, 'onCreateFooterCell'>>, table: BoringTable<TData, TPlugins, any>) => any
 >;
 
 export type BoringColumn<TData extends any[], TPlugins extends any[] = any[]> = {
   type?: string;
-  head: CreateHeadCell<TData, TPlugins>;
+  head?: CreateHeadCell<TData, TPlugins>;
   body: CreateBodyCell<TData, TPlugins>;
   footer?: CreateFooterCell<TData, TPlugins>;
 };
@@ -78,13 +77,16 @@ export type BoringFooter<TColumns extends any[], TPlugins extends any[] = any[]>
   >
 >;
 
-type ExtractColumnKey<T extends any[], K extends keyof T[number]> =
+export type ExtractColumnKey<T extends any[], K extends keyof T[number]> =
   | Extract<T[number][K], Function>
   | Extract<T[number][K], Function[]>[number];
 
 export type HeaderColumn<T extends any[]> = { type?: string; head: ExtractColumnKey<T, 'head'> };
 export type FooterColumn<T extends any[]> = { type?: string; footer: ExtractColumnKey<T, 'footer'> };
-
+export type ExtractMethodFromArray<T extends any[], K extends keyof T[number]> = Extract<T[number], Record<K, any>>[K];
+export type ReturnTypeMethodFromArray<T extends any[], K extends keyof T[number]> = Simplify<
+  UnionToIntersection<ReturnType<ExtractMethodFromArray<T, K>>>
+>;
 export interface BoringTableOptions<
   TData extends any[],
   TPlugins extends any[] = any[],
@@ -111,13 +113,15 @@ export class BoringTable<
   footerColumns: FooterColumn<TColumns>[][] = [];
 
   plugins: TPlugins = [] as unknown as TPlugins;
-  config!: ReturnMethodValue<TPlugins, 'configure'>;
-  extensions!: ReturnMethodValue<TPlugins, 'extend'>;
+  config!: ReturnTypeMethodFromArray<TPlugins, 'configure'>;
+  extensions!: ReturnTypeMethodFromArray<TPlugins, 'extend'>;
   events: BoringEvents;
 
   head: BoringHead<TColumns, TPlugins>[] = [];
   body: BoringBody<TColumns, TPlugins>[] = [];
   footer: BoringFooter<TColumns, TPlugins>[] = [];
+
+  customBody: BoringBody<TColumns, TPlugins>[] = [];
 
   constructor(options: BoringTableOptions<TData, TPlugins, TColumns>) {
     this.data = options.data;
@@ -130,7 +134,7 @@ export class BoringTable<
         ['create:all', undefined],
       ],
     });
-    if (options.plugins) this.plugins = options.plugins.sort((a, b) => b.priority - a.priority);
+    if (options.plugins) this.plugins = options.plugins.sort((a, b) => a.priority - b.priority);
     this.composeColumns();
     this.configure();
     this.process();
@@ -275,8 +279,9 @@ export class BoringTable<
     }
 
     if (this.events.has('update:config')) this.updateConfig();
-    if (this.events.has('update:extensions')) this.updateExtensions();
     if (this.events.has('update:events')) this.updateEvents();
+    if (this.events.has('update:custom-body')) this.updateCustomBody();
+    if (this.events.has('update:extensions')) this.updateExtensions();
     this.numberOfUpdates++;
     this.onChange?.();
     console.timeEnd('\x1B[34mprocess');
@@ -350,6 +355,7 @@ export class BoringTable<
       if (row) rows.push(row);
     }
     this.body = rows;
+    this.customBody = rows;
     this.plugins.forEach((plugin) => plugin.afterCreateBodyRows(rows, this.data));
     return rows;
   }
@@ -536,18 +542,12 @@ export class BoringTable<
     this.plugins.forEach((plugin) => plugin.onUpdateFooterRows(this.footer));
     for (let index = 0; index < this.footer.length; index++) this.updateFooterRow(index);
   }
-}
 
-const createBoringColumns = <
-  TData extends any[] = any,
-  const TPlugins extends IBoringPlugin[] = IBoringPlugin[],
-  const TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
->({
-  data: _,
-  ...options
-}: Omit<BoringTableOptions<TData, TPlugins, TColumn>, 'data'> & { data?: TData }): Omit<
-  BoringTableOptions<TData, TPlugins, TColumn>,
-  'data'
-> => {
-  return options;
-};
+  updateCustomBody() {
+    this.customBody = this.body;
+    this.plugins.forEach((plugin) => {
+      console.log('onUpdateCustomBody', plugin.name);
+      plugin.onUpdateCustomBody(this.customBody);
+    });
+  }
+}
