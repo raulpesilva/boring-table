@@ -7,18 +7,16 @@ import {
   BoringTableOptions,
   FooterColumn,
   HeaderColumn,
-  ReturnMethodValue,
+  ReturnTypeMethodFromArray,
 } from '../core';
 import { BoringEvent, BoringEvents } from '../core/BoringEvents';
-
-// TODO: criar extrator para headColumns e footerColumns
-// TODO: arrumar outros tipos e retornos
 
 export interface BoringTableType<
   TData extends any[],
   TPlugins extends any[] = any[],
   TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
 > {
+  numberOfUpdates: number;
   onChange: (table: BoringTable<TData, TPlugins, TColumns>) => void;
   getId: (arg: TData[number]) => string;
 
@@ -27,13 +25,15 @@ export interface BoringTableType<
   footerColumns: FooterColumn<TColumns>[][];
 
   plugins: TPlugins;
-  config: ReturnMethodValue<TPlugins, 'configure'>;
-  extensions: ReturnMethodValue<TPlugins, 'extend'>;
+  config: ReturnTypeMethodFromArray<TPlugins, 'configure'>;
+  extensions: ReturnTypeMethodFromArray<TPlugins, 'extend'>;
   events: BoringEvents;
 
   head: BoringHead<TColumns, TPlugins>[];
   body: BoringBody<TColumns, TPlugins>[];
   footer: BoringFooter<TColumns, TPlugins>[];
+
+  customBody: BoringBody<TColumns, TPlugins>[];
 
   new (options: BoringTableOptions<TData, TPlugins, TColumns>): this;
 
@@ -92,6 +92,7 @@ export interface BoringTableType<
   updateFooterCell: () => void;
   updateFooterRow: () => void;
   updateFooterRows: () => void;
+  updateCustomBody: () => void;
 }
 
 export type THead<T extends { head: any[] }> = T['head'];

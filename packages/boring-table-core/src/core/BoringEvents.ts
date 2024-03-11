@@ -23,6 +23,8 @@ export interface BoringEvent {
   'update:rows': void;
   'update:events': void;
 
+  'update:custom-body': void;
+
   'update:data': void;
   'update:data-item': { dataIndex: number };
 
@@ -119,6 +121,7 @@ const CancelEvents: Record<keyof BoringEvent, Partial<keyof BoringEvent>[]> = {
     'update:footer-cell',
   ],
 
+  'update:custom-body': [],
   'update:data': ['update:data-item'],
   'update:data-item': [],
   'update:columns': ['update:column'],
@@ -143,6 +146,7 @@ export class BoringEvents {
   events: MapEvents<BoringEvent> = new Map();
   hasScheduledUpdate = false;
   process: () => void;
+  timeoutId: number | undefined;
 
   constructor(options: BoringEventsOptions) {
     this.process = options.process;
@@ -162,17 +166,22 @@ export class BoringEvents {
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
     // TODO: melhorar os eventos para quando um evento for disparado, nao adicionar um evento que ja é atendido por outro evento
     // nao apenas cancelar os eventos anteriores
-    
+
     console.log('\x1B[34m>--------------------------------->>', '\x1b[0m');
     this.upsetEvent(event, payload);
     if (this.hasScheduledUpdate) return;
     this.hasScheduledUpdate = true;
-    queueMicrotask(() => {
+    if (this.timeoutId) clearTimeout(this.timeoutId);
+    this.timeoutId = setTimeout(() => {
       this.process();
       this.hasScheduledUpdate = false;
       this.events.clear();
       console.log('\x1B[31m<<---------------------------------<', '\x1b[0m');
-    });
+    }, 0);
+  }
+
+  cancelNextProcess() {
+    if (this.timeoutId) clearTimeout(this.timeoutId);
   }
 
   has(event: keyof BoringEvent) {

@@ -44,7 +44,8 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
-    "tsconfig": "workspace:*"
+    "tsconfig": "workspace:*",
+    "type-fest": "^4.12.0"
   },
   "publishConfig": {
     "access": "public"

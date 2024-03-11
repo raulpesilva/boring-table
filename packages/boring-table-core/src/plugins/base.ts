@@ -82,11 +82,11 @@ export interface IBoringPlugin {
 
   // 'config'
   configure: (table: any) => any;
-  onUpdateConfig: (config: Record<string,any>) => void;
+  onUpdateConfig: (config: Record<string, any>) => void;
 
   // 'extensions'
   extend: () => any;
-  onUpdateExtensions: (extensions: Record<string,any>) => void;
+  onUpdateExtensions: (extensions: Record<string, any>) => void;
 
   // 'head'
   beforeCreateHeadRows: (data: any[]) => void;
@@ -113,6 +113,7 @@ export interface IBoringPlugin {
   onReset: () => void;
 
   // update
+  onUpdateCustomBody(rows: any): void;
   onUpdateBodyRows: (rows: any[]) => void;
   onUpdateBodyRow: (row: any) => any;
   onUpdateBodyCell: (cell: any) => any;
@@ -159,7 +160,7 @@ export abstract class BoringPlugin implements IBoringPlugin {
   onUpdatePlugins(_plugins: BoringPlugin[]) {}
 
   // 'config'
-  configure(_table: BoringTable) {
+  configure(_table: any) {
     throw new Error('Plugin must override "configure"');
     return {};
   }
@@ -213,6 +214,7 @@ export abstract class BoringPlugin implements IBoringPlugin {
   onReset() {}
 
   // update
+  onUpdateCustomBody(_rows: BoringTable['customBody']) {}
   onUpdateBodyRows(_rows: BoringTable['body']) {}
   onUpdateBodyRow(_row: BoringTable['body'][number]) {}
   onUpdateBodyCell(_cell: BoringTable['body'][number]['cells'][number]) {}
