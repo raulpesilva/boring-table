@@ -1,13 +1,14 @@
 {
   "name": "react-boring-table",
-  "version": "0.0.8",
-  "description": "",
+  "version": "0.0.11",
+  "description": "Next generation of Headless UI Table && DataGrid",
   "author": "raulpesilva",
   "license": "MIT",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/raulpesilva/boring-table.git"
+    "url": "https://github.com/raulpesilva/boring-table.git",
+    "directory": "packages/react-boring-table"
   },
   "type": "module",
   "types": "dist/index.d.ts",
@@ -28,13 +29,14 @@
         "default": "./dist/index.cjs",
         "types": "./dist/index.d.cts"
       }
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "tsup --minify",
     "start": "tsup",
     "dev": "tsup --watch",
-    "clean": "rimraf ./dist && rimraf ./coverage && rimraf ./node_modules",
+    "clean": "rimraf ./dist && rimraf ./coverage",
     "lint": "tsc .",
     "test": "vitest run",
     "test:watch": "vitest",

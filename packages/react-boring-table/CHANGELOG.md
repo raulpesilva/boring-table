@@ -1,5 +1,29 @@
 # react-boring-table
 
+## 0.0.9
+
+### Patch Changes
+
+- change build
+- Updated dependencies
+  - boring-table@0.0.11
+
+## 0.0.10
+
+### Patch Changes
+
+- update build
+- Updated dependencies
+  - boring-table@0.0.10
+
+## 0.0.9
+
+### Patch Changes
+
+- update build
+- Updated dependencies
+  - boring-table@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes
