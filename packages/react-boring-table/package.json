@@ -1,19 +1,20 @@
 {
   "name": "react-boring-table",
   "version": "0.0.8",
-  "description": "",
+  "description": "Next generation of Headless UI Table && DataGrid",
   "author": "raulpesilva",
   "license": "MIT",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/raulpesilva/boring-table.git"
+    "url": "https://github.com/raulpesilva/boring-table.git",
+    "directory": "packages/react-boring-table"
   },
   "type": "module",
   "types": "dist/index.d.ts",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "unpkg": "dist/index.global.js",
+  "main": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "unpkg": "dist/iife/index.js",
   "sideEffects": false,
   "files": [
     "dist/**"
@@ -21,17 +22,21 @@
   "exports": {
     ".": {
       "import": {
+        "default": "./dist/esm/index.js",
+        "types": "./dist/esm/index.d.ts"
+      },
+      "require": {
         "default": "./dist/index.js",
         "types": "./dist/index.d.ts"
       },
-      "require": {
-        "default": "./dist/index.cjs",
-        "types": "./dist/index.d.cts"
-      }
-    }
+      "node": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/esm/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsup --minify",
+    "build": "tsup",
     "start": "tsup",
     "dev": "tsup --watch",
     "clean": "rimraf ./dist && rimraf ./coverage && rimraf ./node_modules",
