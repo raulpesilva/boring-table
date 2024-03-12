@@ -4,12 +4,9 @@
 
 adicionar returnType dos updates e fazer com que adicione com Object Assign
 deixar os methodos dos plugins opcionais
-mudar createColumns para create Options
-adicionar row como parametro
+mudar custom body para body e body para internalBody
 
 `createColumns<TData, TPlugins>`
-`createTable<TData,TPlugins,TColumns>`
-`useTable<TData,TPlugins,TColumns>`
 
 ## plugins
 

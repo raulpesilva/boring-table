@@ -8,8 +8,6 @@ export default defineConfig({
   clean: true,
   splitting: true,
   treeshake: true,
-  shims: true,
-  legacyOutput: true,
   external: ['react'],
   ignoreWatch: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**', '**/coverage/**'],
 });

@@ -1,6 +1,6 @@
 {
   "name": "react-boring-table",
-  "version": "0.0.9",
+  "version": "0.0.8",
   "description": "Next generation of Headless UI Table && DataGrid",
   "author": "raulpesilva",
   "license": "MIT",
@@ -12,9 +12,9 @@
   },
   "type": "module",
   "types": "dist/index.d.ts",
-  "main": "dist/index.js",
-  "module": "dist/esm/index.js",
-  "unpkg": "dist/iife/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "unpkg": "dist/index.global.js",
   "sideEffects": false,
   "files": [
     "dist/**"
@@ -22,24 +22,21 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./dist/esm/index.js",
-        "types": "./dist/esm/index.d.ts"
-      },
-      "require": {
         "default": "./dist/index.js",
         "types": "./dist/index.d.ts"
       },
-      "node": "./dist/index.js",
-      "types": "./dist/index.d.ts",
-      "default": "./dist/esm/index.js"
+      "require": {
+        "default": "./dist/index.cjs",
+        "types": "./dist/index.d.cts"
+      }
     },
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --minify",
     "start": "tsup",
     "dev": "tsup --watch",
-    "clean": "rimraf ./dist && rimraf ./coverage && rimraf ./node_modules",
+    "clean": "rimraf ./dist && rimraf ./coverage",
     "lint": "tsc .",
     "test": "vitest run",
     "test:watch": "vitest",
