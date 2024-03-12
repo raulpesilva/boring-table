@@ -1,5 +1,5 @@
 import { BoringColumn, BoringTable } from '../core';
-import { BoringPlugin, IBoringPlugin } from './base';
+import { BASE_PRIORITIES, BoringPlugin, IBoringPlugin } from './base';
 
 export class PaginationPlugin<
   TData extends any[] = any,
@@ -9,7 +9,7 @@ export class PaginationPlugin<
   get name() {
     return 'pagination-plugin';
   }
-  priority = 10;
+  priority = BASE_PRIORITIES.SHOULD_BE_LAST;
   table!: BoringTable<TData, TPlugins, TColumns>;
   page = 1;
   pageSize = 0;
@@ -27,23 +27,7 @@ export class PaginationPlugin<
     return {};
   }
 
-  afterCreateBodyRows() {
-    if (this.pageSize === 0) this.pageSize = this.table.customBody.length;
-    this.table.dispatch('update:extensions');
-    return {};
-  }
-
-  onUpdateCustomBody() {
-    console.log('onUpdateCustomBody', this.page, this.pageSize, this.table.customBody.length);
-    if (this.table.customBody.length !== this.totalItems) this.page = 1;
-    this.totalItems = this.table.customBody.length;
-    this.lastPage = Math.ceil(this.totalItems / this.pageSize);
-    this.table.customBody = this.table.customBody.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
-    this.table.dispatch('update:extensions');
-  }
-
   nextPage() {
-    console.log('nextPage', this.page, this.lastPage);
     if (this.page >= this.lastPage) return;
     this.page++;
     this.table.dispatch('update:custom-body');
@@ -51,10 +35,26 @@ export class PaginationPlugin<
   }
 
   prevPage() {
-    console.log('prevPage', this.page, this.lastPage);
     if (this.page <= 1) return;
     this.page--;
     this.table.dispatch('update:custom-body');
+    this.table.dispatch('update:extensions');
+  }
+
+  afterCreateBodyRows() {
+    if (this.pageSize === 0) this.pageSize = this.table.customBody.length;
+    if (this.table.customBody.length !== this.totalItems) this.page = 1;
+    this.totalItems = this.table.customBody.length;
+    this.lastPage = Math.ceil(this.totalItems / this.pageSize);
+    this.table.dispatch('update:extensions');
+    return {};
+  }
+
+  onUpdateCustomBody() {
+    if (this.table.customBody.length !== this.totalItems) this.page = 1;
+    this.totalItems = this.table.customBody.length;
+    this.lastPage = Math.ceil(this.totalItems / this.pageSize);
+    this.table.customBody = this.table.customBody.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
     this.table.dispatch('update:extensions');
   }
 

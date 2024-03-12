@@ -8,23 +8,13 @@ export class SwapRowPlugin extends BoringPlugin {
 
   table?: BoringTable;
 
+  constructor() {
+    super();
+    throw new Error('Not implemented');
+  }
+
   configure(table: BoringTable) {
     this.table = table;
     return {};
-  }
-
-  onCreateBodyRow(row: BoringTable['body'][number]) {
-    return {
-      swap: (index: number) => {
-        if (!this.table) return;
-        const { body } = this.table;
-        const target = body[index];
-        const source = body[row.index];
-        if (target) body[row.index] = target;
-        if (source) body[index] = source;
-        this.table.dispatch('update:body-rows');
-        console.log('swap', index, row.index);
-      },
-    };
   }
 }

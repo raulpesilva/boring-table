@@ -1,5 +1,5 @@
 import { BoringColumn, BoringTable } from '../core';
-import { BoringPlugin, IBoringPlugin } from './base';
+import { BASE_PRIORITIES, BoringPlugin, IBoringPlugin } from './base';
 
 export class FilterPlugin<
   TData extends any[] = any,
@@ -10,8 +10,9 @@ export class FilterPlugin<
   get name() {
     return 'filter-plugin';
   }
-  priority = 0;
+  priority = BASE_PRIORITIES.HIGHEST;
   table!: BoringTable;
+
   filterFn: (item: TData[number], criteria: TCriteria, row: any) => boolean;
   criteria: TCriteria;
   debounceTime: number;
@@ -37,20 +38,6 @@ export class FilterPlugin<
     return {};
   }
 
-  afterCreateBodyRows() {
-    this.table.dispatch('update:custom-body');
-    return {};
-  }
-
-  onUpdateCustomBody() {
-    this.table.customBody = this.table.customBody.filter((row) =>
-      this.filterFn(this.table.data[row.index], this.criteria, row)
-    );
-  }
-
-  onUpdateExtensions(extensions: BoringTable['extensions']): void {
-    Object.assign(extensions, this.extend());
-  }
   unwrapData(data: TCriteria | ((prev: TCriteria) => TCriteria), prev: TCriteria) {
     if (typeof data !== 'function') return data;
     return (data as (prev: TCriteria) => TCriteria)(prev);
@@ -66,6 +53,25 @@ export class FilterPlugin<
       return;
     }
     internal();
+  }
+
+  afterCreateBodyRows() {
+    this.table.dispatch('update:custom-body');
+    return {};
+  }
+
+  onUpdateBodyRows() {
+    this.table.dispatch('update:custom-body');
+  }
+
+  onUpdateCustomBody() {
+    this.table.customBody = this.table.customBody.filter((row) =>
+      this.filterFn(this.table.data[row.index], this.criteria, row)
+    );
+  }
+
+  onUpdateExtensions(extensions: BoringTable['extensions']) {
+    Object.assign(extensions, this.extend());
   }
 
   extend() {

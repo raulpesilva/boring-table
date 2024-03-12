@@ -1,5 +1,20 @@
 # react-boring-table
 
+## 0.0.8
+
+### Patch Changes
+
+- feat plugin priorities
+  feat getRow on cells
+
+  add RowHidden
+  add new RowSelection
+
+  update filter
+
+- Updated dependencies
+  - boring-table@0.0.8
+
 ## 0.0.7
 
 ### Patch Changes
