@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.0.11
+
+### Patch Changes
+
+- change build
+
 ## 0.0.10
 
 ### Patch Changes
