@@ -1,11 +1,13 @@
 import type { BoringTable } from '../core';
-import { BoringPlugin } from './base';
+import { BASE_PRIORITIES, BoringPlugin } from './base';
 
 export class ChangePlugin<T> extends BoringPlugin {
   get name() {
     return 'change-plugin';
   }
+  priority = BASE_PRIORITIES.SHOULD_BE_FIRST;
   table?: BoringTable;
+
   initialData: T[] = [];
 
   constructor() {

@@ -31,22 +31,56 @@ export type ExtractMethod<T extends any[], K extends keyof T[number]> = UnwrapAr
   Extract<T[number], Record<K, any>>[K]
 >;
 export type ReturnMethodValue<T extends any[], K extends keyof T[number]> = Simplify<ReturnType<ExtractMethod<T, K>>>;
-export type ExtractExtra<T extends any[], K extends keyof T[number]> = UnionToIntersection<
-  ReturnMethodValue<T, K> | BaseCell
+export type ExtractExtra<
+  T extends any[],
+  K extends keyof T[number],
+  TData extends any[],
+  K2 extends keyof T[number]
+> = UnionToIntersection<
+  | ReturnMethodValue<T, K>
+  | BaseCell
+  | {
+      getRow: () => Simplify<
+        Partial<
+          UnionToIntersection<
+            | BaseRow<TData[number], UnionToIntersection<ReturnMethodValue<T, K> | BaseCell>>
+            | UnionToIntersection<ReturnMethodValue<T, K2>>
+          >
+        >
+      >;
+    }
 >;
 
+type GetBodyRow<TData extends any[], TPlugins extends any[] = any[]> = Simplify<
+  Partial<
+    UnionToIntersection<
+      | BaseRow<TData[number], UnionToIntersection<ReturnMethodValue<TPlugins, 'onCreateBodyCell'> | BaseCell>>
+      | ReturnMethodValue<TPlugins, 'onCreateBodyRow'>
+    >
+  >
+>;
 export type CreateBodyCell<TData extends any[], TPlugins extends any[] = any[]> = (
   item: TData[number],
-  extra: Simplify<UnionToIntersection<ReturnMethodValue<TPlugins, 'onCreateBodyCell'> | BaseCell>>,
+  extra: Simplify<
+    UnionToIntersection<
+      ReturnMethodValue<TPlugins, 'onCreateBodyCell'> | BaseCell | { getRow: () => GetBodyRow<TData, TPlugins> }
+    >
+  >,
   table: BoringTable<TData, TPlugins, any>
 ) => any;
 
 export type CreateHeadCell<TData extends any[], TPlugins extends any[] = any[]> = ArrayOrFunction<
-  (extra: Simplify<ExtractExtra<TPlugins, 'onCreateHeadCell'>>, table: BoringTable<TData, TPlugins, any>) => any
+  (
+    extra: Simplify<ExtractExtra<TPlugins, 'onCreateHeadCell', TData, 'onCreateHeadRow'>>,
+    table: BoringTable<TData, TPlugins, any>
+  ) => any
 >;
 
 export type CreateFooterCell<TData extends any[], TPlugins extends any[] = any[]> = ArrayOrFunction<
-  (extra: Simplify<ExtractExtra<TPlugins, 'onCreateFooterCell'>>, table: BoringTable<TData, TPlugins, any>) => any
+  (
+    extra: Simplify<ExtractExtra<TPlugins, 'onCreateFooterCell', TData, 'onCreateFooterRow'>>,
+    table: BoringTable<TData, TPlugins, any>
+  ) => any
 >;
 
 export type BoringColumn<TData extends any[], TPlugins extends any[] = any[]> = {
@@ -154,6 +188,9 @@ export class BoringTable<
     this.data = data;
     this.dispatch('update:data');
     this.dispatch('create:body-rows');
+    this.dispatch('create:head-rows');
+    this.dispatch('update:custom-body');
+    this.dispatch('update:extensions');
   }
   setOptions(options: Partial<BoringTableOptions<TData, TPlugins, TColumns>>) {
     if (options.data) this.data = options.data;
@@ -203,7 +240,11 @@ export class BoringTable<
   process() {
     console.time('\x1B[34mprocess');
     console.log(...this.events.events.entries());
+    if (this.events.has('update:all')) this.updateAll();
+    if (this.events.has('update:events')) this.updateEvents();
+    if (this.events.has('update:config')) this.updateConfig();
     if (this.events.has('event:mount')) this.plugins.forEach((plugin) => plugin.onMount());
+
     // TODO: adicionar os parâmetros de cada evento
 
     if (this.events.has('create:all')) this.createAll();
@@ -244,19 +285,7 @@ export class BoringTable<
     }
 
     if (this.events.has('update:plugins')) this.updatePlugins();
-    if (this.events.has('update:all')) this.updateAll();
     if (this.events.has('update:data')) this.updateData();
-    if (this.events.has('update:rows')) this.updateRows();
-
-    if (this.events.has('update:head-rows')) this.updateHeadRows();
-    if (this.events.has('update:head-row')) {
-      const events = this.events.get('update:head-row');
-      events.forEach(({ rowIndex }) => this.updateHeadRow(rowIndex));
-    }
-    if (this.events.has('update:head-cell')) {
-      const events = this.events.get('update:head-cell');
-      events.forEach(({ rowIndex, columnIndex }) => this.updateHeadCell(rowIndex, columnIndex));
-    }
 
     if (this.events.has('update:body-rows')) this.updateBodyRows();
     if (this.events.has('update:body-row')) {
@@ -266,6 +295,16 @@ export class BoringTable<
     if (this.events.has('update:body-cell')) {
       const events = this.events.get('update:body-cell');
       events.forEach(({ rowIndex, columnIndex }) => this.updateBodyCell(rowIndex, columnIndex));
+    }
+
+    if (this.events.has('update:head-rows')) this.updateHeadRows();
+    if (this.events.has('update:head-row')) {
+      const events = this.events.get('update:head-row');
+      events.forEach(({ rowIndex }) => this.updateHeadRow(rowIndex));
+    }
+    if (this.events.has('update:head-cell')) {
+      const events = this.events.get('update:head-cell');
+      events.forEach(({ rowIndex, columnIndex }) => this.updateHeadCell(rowIndex, columnIndex));
     }
 
     if (this.events.has('update:footer-rows')) this.updateFooterRows();
@@ -278,10 +317,10 @@ export class BoringTable<
       events.forEach(({ rowIndex, columnIndex }) => this.updateFooterCell(rowIndex, columnIndex));
     }
 
-    if (this.events.has('update:config')) this.updateConfig();
-    if (this.events.has('update:events')) this.updateEvents();
+    if (this.events.has('update:rows')) this.updateRows();
     if (this.events.has('update:custom-body')) this.updateCustomBody();
     if (this.events.has('update:extensions')) this.updateExtensions();
+
     this.numberOfUpdates++;
     this.onChange?.();
     console.timeEnd('\x1B[34mprocess');
@@ -313,7 +352,14 @@ export class BoringTable<
   ): BoringBody<TColumns, TPlugins>['cells'][number] {
     const rawId = this.getId(item);
     const id = `cell-${index}-${rawId}`;
-    const cell: BoringBody<TColumns, TPlugins>['cells'][number] = { id, rawId, index, rowIndex, value: undefined };
+    const cell: BoringBody<TColumns, TPlugins>['cells'][number] = {
+      id,
+      rawId,
+      index,
+      rowIndex,
+      value: undefined,
+      getRow: () => this.body[rowIndex],
+    };
 
     for (let i = 0; i < this.plugins.length; i++) {
       const plugin = this.plugins[i];
@@ -367,7 +413,14 @@ export class BoringTable<
   ): BoringHead<TColumns, TPlugins>['cells'][number] {
     const rawId = `${index}`;
     const id = `cell-${rowIndex}-${index}`;
-    const cell: BoringHead<TColumns, TPlugins>['cells'][number] = { id, rawId, index, rowIndex, value: undefined };
+    const cell: BoringHead<TColumns, TPlugins>['cells'][number] = {
+      id,
+      rawId,
+      index,
+      rowIndex,
+      value: undefined,
+      getRow: () => this.head[rowIndex],
+    };
     for (let i = 0; i < this.plugins.length; i++) {
       const plugin = this.plugins[i];
       if (!!column) Object.assign(cell, plugin.onCreateHeadCell.bind(plugin)(cell));
@@ -419,7 +472,14 @@ export class BoringTable<
   ): BoringFooter<TColumns, TPlugins>['cells'][number] {
     const rawId = `${index}`;
     const id = `cell-${rowIndex}-${index}`;
-    const cell: BoringFooter<TColumns, TPlugins>['cells'][number] = { id, rawId, index, rowIndex, value: undefined };
+    const cell: BoringFooter<TColumns, TPlugins>['cells'][number] = {
+      id,
+      rawId,
+      index,
+      rowIndex,
+      value: undefined,
+      getRow: () => this.footer[rowIndex],
+    };
     for (let i = 0; i < this.plugins.length; i++) {
       const plugin = this.plugins[i];
       if (!!column) Object.assign(cell, plugin.onCreateFooterCell.bind(plugin)(cell));
@@ -489,8 +549,8 @@ export class BoringTable<
     this.updateRows();
   }
   updateData() {
-    this.plugins.forEach((plugin) => plugin.onUpdateData(this.data));
     this.updateRows();
+    this.plugins.forEach((plugin) => plugin.onUpdateData(this.data));
   }
   updateRows() {
     this.updateHeadRows();
@@ -545,9 +605,6 @@ export class BoringTable<
 
   updateCustomBody() {
     this.customBody = this.body;
-    this.plugins.forEach((plugin) => {
-      console.log('onUpdateCustomBody', plugin.name);
-      plugin.onUpdateCustomBody(this.customBody);
-    });
+    this.plugins.forEach((plugin) => plugin.onUpdateCustomBody(this.customBody));
   }
 }

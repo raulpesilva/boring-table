@@ -87,7 +87,6 @@ const CancelEvents: Record<keyof BoringEvent, Partial<keyof BoringEvent>[]> = {
   'update:all': [
     'update:plugins',
     'update:config',
-    'update:extensions',
     'update:events',
     'update:data',
     'update:data-item',
@@ -157,10 +156,11 @@ export class BoringEvents {
     const cancel = CancelEvents[event];
     if (cancel) for (const e of cancel) this.events.delete(e);
     if (this.events.has(event)) {
-      this.events.get(event)?.push(payload);
+      const current = this.events.get(event);
+      if (!current?.some((i) => i === payload) && payload !== undefined) current?.push(payload);
       return;
     }
-    this.events.set(event, [payload]);
+    this.events.set(event, payload ? [payload] : []);
   }
 
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {

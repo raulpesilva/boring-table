@@ -5,58 +5,8 @@ import { isDebugEnabled } from '../utils';
 // definir melhor os momentos e os eventos
 // adicionar momentos antes e dps de uma iteração
 // adicionar eventos para cada momento
+// deixar todos os métodos como opcionais
 
-export const _a = [
-  'name',
-  'priority',
-  // lifecycle
-  'onMount',
-  'onUnmount',
-  'beforeCreateRows',
-  'afterCreateRows',
-  'onScheduleUpdate',
-  'afterScheduleUpdate',
-
-  // 'data'
-  'onChangeData',
-  'onChangeDataItem',
-
-  // 'columns'
-  'onChangeColumns',
-  'onChangeColumn',
-
-  // 'events'
-  'onChangeEvents',
-
-  // 'plugins'
-  'onChangePlugins',
-
-  // 'config'
-  'configure',
-  'onChangeConfig',
-
-  // 'extensions'
-  'extend',
-  'onChangeExtensions',
-
-  // 'head'
-  'onCreateHead',
-  'onCreateHeadRow',
-  'onCreateHeadCell',
-
-  // 'body'
-  'onCreateBody',
-  'onCreateBodyRow',
-  'onCreateBodyCell',
-
-  // 'footer'
-  'onCreateFooter',
-  'onCreateFooterRow',
-  'onCreateFooterCell',
-
-  // 'reset'
-  'onReset',
-];
 export interface IBoringPlugin {
   name: string;
   priority: number;
@@ -225,3 +175,11 @@ export abstract class BoringPlugin implements IBoringPlugin {
   onUpdateFooterRow(_row: BoringTable['footer'][number]) {}
   onUpdateFooterCell(_cell: BoringTable['footer'][number]['cells'][number]) {}
 }
+
+export const BASE_PRIORITIES = {
+  SHOULD_BE_FIRST: 0,
+  HIGHEST: 10,
+  DEFAULT: 100,
+  LOWEST: 1000,
+  SHOULD_BE_LAST: 10000,
+} as const;
