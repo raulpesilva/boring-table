@@ -3,8 +3,8 @@ import { IBoringPlugin } from '../plugins';
 
 export const createOptions = <
   TData extends any[] = any,
-  const TPlugins extends IBoringPlugin[] = IBoringPlugin[],
-  const TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TPlugins extends IBoringPlugin[] = IBoringPlugin[],
+  TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
 >({
   data: _,
   ...options
