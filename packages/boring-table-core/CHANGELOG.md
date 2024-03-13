@@ -1,5 +1,14 @@
 # boring-table
 
+## 0.0.15
+
+### Patch Changes
+
+- remove const generics
+
+  add modern build
+  add legacy build
+
 ## 0.0.14
 
 ### Patch Changes
