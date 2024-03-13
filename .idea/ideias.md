@@ -3,8 +3,9 @@
 ## TODO
 
 adicionar returnType dos updates e fazer com que adicione com Object Assign
-deixar os methodos dos plugins opcionais
+deixar os métodos dos plugins opcionais
 mudar custom body para body e body para internalBody
+remover iife
 
 `createColumns<TData, TPlugins>`
 
