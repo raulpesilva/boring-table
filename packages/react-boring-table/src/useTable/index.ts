@@ -3,8 +3,8 @@ import React from 'react';
 
 export const useTable = <
   TData extends any[] = any,
-  const TPlugins extends IBoringPlugin[] = IBoringPlugin[],
-  const TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TPlugins extends IBoringPlugin[] = IBoringPlugin[],
+  TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
 >(
   options: BoringTableOptions<TData, TPlugins, TColumn>
 ) => {

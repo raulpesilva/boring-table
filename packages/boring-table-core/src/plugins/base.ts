@@ -110,9 +110,8 @@ export abstract class BoringPlugin implements IBoringPlugin {
   onUpdatePlugins(_plugins: BoringPlugin[]) {}
 
   // 'config'
-  configure(_table: any) {
+  configure(_table: any): {} {
     throw new Error('Plugin must override "configure"');
-    return {};
   }
   onUpdateConfig(_config: BoringTable['config']) {}
 

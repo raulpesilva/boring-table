@@ -1,6 +1,6 @@
 {
   "name": "react-boring-table",
-  "version": "0.0.11",
+  "version": "0.0.14",
   "description": "Next generation of Headless UI Table && DataGrid",
   "author": "raulpesilva",
   "license": "MIT",
@@ -11,28 +11,28 @@
     "directory": "packages/react-boring-table"
   },
   "type": "module",
-  "types": "dist/index.d.ts",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "sideEffects": false,
-  "files": [
-    "dist/**"
-  ],
+  "types": "build/legacy/index.d.ts",
+  "main": "build/legacy/index.cjs",
+  "module": "build/legacy/index.js",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "types": "./build/modern/index.d.ts",
+        "default": "./build/modern/index.js"
       },
       "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
+        "types": "./build/modern/index.d.cts",
+        "default": "./build/modern/index.cjs"
       }
-    },
-    "./package.json": "./package.json"
+    }
   },
+  "sideEffects": false,
+  "files": [
+    "build",
+    "src"
+  ],
   "scripts": {
-    "build": "tsup --minify",
+    "build": "tsup ",
     "start": "tsup",
     "dev": "tsup --watch",
     "clean": "rimraf ./dist && rimraf ./coverage",
@@ -53,7 +53,7 @@
     "tsconfig": "workspace:*"
   },
   "peerDependencies": {
-    "react": ">=18.2.0"
+    "react": "^18.0.0"
   },
   "publishConfig": {
     "access": "public"
