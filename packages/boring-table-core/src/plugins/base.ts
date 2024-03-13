@@ -1,6 +1,6 @@
 import type { BoringTable } from '../core';
 import { BoringEvents } from '../core/BoringEvents';
-import { isDebugEnabled } from '../utils';
+import { Logger } from '../utils';
 
 // definir melhor os momentos e os eventos
 // adicionar momentos antes e dps de uma iteração
@@ -82,12 +82,7 @@ export abstract class BoringPlugin implements IBoringPlugin {
   priority = 0;
   showDebug = false;
 
-  debug(...args: any[]) {
-    if (isDebugEnabled() && this.showDebug) {
-      const [first, ...rest] = args;
-      console.log(`\x1B[32m[${this.name}]\x1b[34m`, first, '\x1b[0m', ...rest);
-    }
-  }
+  debug = (...args: any[]) => Logger.instance.debugWithName(this.name, ...args);
 
   // lifecycle
   onMount() {}

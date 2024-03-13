@@ -1,5 +1,5 @@
-import { BoringColumn, BoringTable, BoringTableOptions } from "../core";
-import { IBoringPlugin } from "../plugins";
+import { BoringColumn, BoringTable, BoringTableOptions } from '../core';
+import { IBoringPlugin } from '../plugins';
 
 export const createBoringTable = <
   TData extends any[] = any,

@@ -3,7 +3,7 @@ import { BASE_PRIORITIES, BoringPlugin } from './base';
 
 export class HiddenRowPlugin extends BoringPlugin {
   get name() {
-    return 'hidden-row-plugin';
+    return 'row-hidden-plugin';
   }
   priority = BASE_PRIORITIES.DEFAULT;
   table?: BoringTable;
@@ -43,16 +43,6 @@ export class HiddenRowPlugin extends BoringPlugin {
     if (!ignoreEvent) this.table?.dispatch('update:extensions');
   };
 
-  afterCreateBodyRows(rows: BoringTable['body']) {
-    const hiddenRows = new Map(this.hiddenRows);
-    this.hiddenRows.clear();
-    rows.forEach((row) => this.toggleBody(row, hiddenRows.has(row.rawId), true));
-    this.updateUtils(true);
-    this.table?.dispatch('update:body-rows');
-    this.table?.dispatch('update:head-rows');
-    this.table?.dispatch('update:extensions');
-  }
-
   resetHidden() {
     this.hiddenRows.clear();
     this.table?.body.forEach((row) => (row.hidden = false));
@@ -64,6 +54,16 @@ export class HiddenRowPlugin extends BoringPlugin {
 
   hiddenAll() {
     this.table?.body.forEach((row) => this.toggleBody(row, true, true));
+    this.table?.dispatch('update:body-rows');
+    this.table?.dispatch('update:head-rows');
+    this.table?.dispatch('update:extensions');
+  }
+
+  afterCreateBodyRows(rows: BoringTable['body']) {
+    const hiddenRows = new Map(this.hiddenRows);
+    this.hiddenRows.clear();
+    rows.forEach((row) => this.toggleBody(row, hiddenRows.has(row.rawId), true));
+    this.updateUtils(true);
     this.table?.dispatch('update:body-rows');
     this.table?.dispatch('update:head-rows');
     this.table?.dispatch('update:extensions');

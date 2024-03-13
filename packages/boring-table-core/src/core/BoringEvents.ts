@@ -1,3 +1,5 @@
+import { Logger } from '..';
+
 export interface BoringEvent {
   'event:mount': void;
   'event:unmount': void;
@@ -167,7 +169,7 @@ export class BoringEvents {
     // TODO: melhorar os eventos para quando um evento for disparado, nao adicionar um evento que ja é atendido por outro evento
     // nao apenas cancelar os eventos anteriores
 
-    console.log('\x1B[34m>--------------------------------->>', '\x1b[0m');
+    Logger.instance.debugWithName('schedule', '>--->>');
     this.upsetEvent(event, payload);
     if (this.hasScheduledUpdate) return;
     this.hasScheduledUpdate = true;
@@ -176,7 +178,7 @@ export class BoringEvents {
       this.process();
       this.hasScheduledUpdate = false;
       this.events.clear();
-      console.log('\x1B[31m<<---------------------------------<', '\x1b[0m');
+      Logger.instance.debugWithName('update', '<<---<');
     }, 0);
   }
 

@@ -43,16 +43,6 @@ export class RowSelectPlugin extends BoringPlugin {
     if (!ignoreEvent) this.table?.dispatch('update:extensions');
   };
 
-  afterCreateBodyRows(rows: BoringTable['body']) {
-    const selectedRows = new Map(this.selectedRows);
-    this.selectedRows.clear();
-    rows.forEach((row) => this.toggleBody(row, selectedRows.has(row.rawId), true));
-    this.updateUtils(true);
-    this.table?.dispatch('update:body-rows');
-    this.table?.dispatch('update:head-rows');
-    this.table?.dispatch('update:extensions');
-  }
-
   resetSelections() {
     this.selectedRows.clear();
     this.table?.body.forEach((row) => (row.selected = false));
@@ -76,6 +66,16 @@ export class RowSelectPlugin extends BoringPlugin {
       resetSelections: this.resetSelections.bind(this),
       selectAll: this.selectAll.bind(this),
     };
+  }
+
+  afterCreateBodyRows(rows: BoringTable['body']) {
+    const selectedRows = new Map(this.selectedRows);
+    this.selectedRows.clear();
+    rows.forEach((row) => this.toggleBody(row, selectedRows.has(row.rawId), true));
+    this.updateUtils(true);
+    this.table?.dispatch('update:body-rows');
+    this.table?.dispatch('update:head-rows');
+    this.table?.dispatch('update:extensions');
   }
 
   onUpdateHeadRows(rows: BoringTable['head']) {
