@@ -31,10 +31,12 @@ export class FilterPlugin<
     this.filterFn = options.filter;
     this.criteria = options.initialValue;
     this.debounceTime = options.debounceTime ?? 0;
+    this.debug('Plugin initialized');
   }
 
   configure(table: BoringTable) {
     this.table = table;
+    this.debug('Plugin configured');
     return {};
   }
 

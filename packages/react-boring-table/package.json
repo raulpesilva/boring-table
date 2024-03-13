@@ -1,14 +1,13 @@
 {
   "name": "react-boring-table",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Next generation of Headless UI Table && DataGrid",
   "author": "raulpesilva",
   "license": "MIT",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/raulpesilva/boring-table.git",
-    "directory": "packages/react-boring-table"
+    "url": "https://github.com/raulpesilva/boring-table.git"
   },
   "type": "module",
   "types": "build/legacy/index.d.ts",

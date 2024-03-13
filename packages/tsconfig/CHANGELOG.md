@@ -1,5 +1,15 @@
 # tsconfig
 
+## 0.0.16
+
+### Patch Changes
+
+- add logger
+  add update when change columns and plugins
+  add subscription to change
+
+  fix pagination
+
 ## 0.0.15
 
 ### Patch Changes

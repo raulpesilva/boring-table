@@ -1,4 +1,4 @@
 export * from './createBoringTable';
 export * from './createOptions';
-export * from './debug';
+export * from './logger';
 

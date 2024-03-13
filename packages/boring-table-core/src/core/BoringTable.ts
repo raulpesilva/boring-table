@@ -1,4 +1,6 @@
+import { Logger } from '..';
 import { BoringEvent, BoringEvents } from './BoringEvents';
+import { Observer } from './observer';
 
 export type UnionToIntersection<Union> = (Union extends unknown ? (distributedUnion: Union) => void : never) extends (
   mergedIntersection: infer Intersection
@@ -138,10 +140,12 @@ export class BoringTable<
   TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
 > {
   numberOfUpdates = 0;
-  onChange: () => void = () => {};
+  changeObserver = new Observer();
+
   getId: (arg: TData[number]) => string;
 
   data: TData = [] as unknown as TData;
+  options: BoringTableOptions<TData, TPlugins, TColumns>;
   columns: TColumns;
   headColumns: HeaderColumn<TColumns>[][] = [];
   footerColumns: FooterColumn<TColumns>[][] = [];
@@ -158,6 +162,7 @@ export class BoringTable<
   customBody: BoringBody<TColumns, TPlugins>[] = [];
 
   constructor(options: BoringTableOptions<TData, TPlugins, TColumns>) {
+    this.options = options;
     this.data = options.data;
     this.getId = options.getId;
     this.columns = options.columns;
@@ -175,35 +180,59 @@ export class BoringTable<
     this.events.clear();
   }
 
-  setOnChange(cb: () => void) {
-    this.onChange = cb;
-    return () => {
-      this.onChange = () => {};
-    };
-  }
+  subscribe = (cb: () => void) => this.changeObserver.subscribe(cb);
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]) {
     this.events.dispatch(event, payload);
   }
   setData(data: TData) {
     this.data = data;
+    this.options.data = data;
     this.dispatch('update:data');
     this.dispatch('create:body-rows');
     this.dispatch('create:head-rows');
+    this.dispatch('create:footer-rows');
     this.dispatch('update:custom-body');
     this.dispatch('update:extensions');
   }
   setOptions(options: Partial<BoringTableOptions<TData, TPlugins, TColumns>>) {
-    if (options.data) this.data = options.data;
-    if (options.getId) this.getId = options.getId;
-    if (options.columns) this.columns = options.columns;
-    if (options.plugins) this.plugins = options.plugins;
-    this.dispatch('create:all');
-    this.composeColumns();
-    this.configure();
-    this.process();
+    if (options.data && this.options.data !== options.data) this.setData(options.data);
+    if (options.getId && this.options.getId !== options.getId) {
+      this.getId = options.getId;
+      this.options.getId = options.getId;
+      this.dispatch('create:body-rows');
+      this.dispatch('create:head-rows');
+      this.dispatch('create:footer-rows');
+      this.dispatch('update:custom-body');
+      this.dispatch('update:extensions');
+    }
+
+    if (options.columns && this.options.columns !== options.columns) {
+      this.columns = options.columns;
+      this.options.columns = options.columns;
+      this.composeColumns();
+      this.dispatch('create:body-rows');
+      this.dispatch('create:head-rows');
+      this.dispatch('create:footer-rows');
+      this.dispatch('update:custom-body');
+      this.dispatch('update:extensions');
+    }
+
+    if (options.plugins && this.options.plugins !== options.plugins) {
+      this.plugins = options.plugins;
+      this.options.plugins = options.plugins;
+      this.configure();
+      this.dispatch('create:body-rows');
+      this.dispatch('create:head-rows');
+      this.dispatch('create:footer-rows');
+      this.dispatch('update:custom-body');
+      this.dispatch('update:plugins');
+      this.dispatch('update:extensions');
+    }
   }
 
   composeColumns() {
+    this.headColumns = [];
+    this.footerColumns = [];
     for (let columnIndex = 0; columnIndex < this.columns.length; columnIndex++) {
       const column = this.columns[columnIndex];
       const { body: _, head, footer, ...rest } = column;
@@ -238,8 +267,8 @@ export class BoringTable<
     this.extensions = this.plugins.reduce((acc, plugin) => ({ ...acc, ...plugin.extend() }), this.extensions);
   }
   process() {
-    console.time('\x1B[34mprocess');
-    console.log(...this.events.events.entries());
+    Logger.instance.time('process');
+    Logger.instance.debug(...this.events.events.entries());
     if (this.events.has('update:all')) this.updateAll();
     if (this.events.has('update:events')) this.updateEvents();
     if (this.events.has('update:config')) this.updateConfig();
@@ -322,9 +351,9 @@ export class BoringTable<
     if (this.events.has('update:extensions')) this.updateExtensions();
 
     this.numberOfUpdates++;
-    this.onChange?.();
-    console.timeEnd('\x1B[34mprocess');
-    console.log('numberOfUpdates', this.numberOfUpdates);
+    this.changeObserver.notify();
+    Logger.instance.timeEnd('process');
+    Logger.instance.debugWithName('numberOfUpdates', this.numberOfUpdates);
   }
   reset() {
     this.events.clear();

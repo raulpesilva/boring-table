@@ -3,23 +3,26 @@ import {
   BoringColumn,
   BoringFooter,
   BoringHead,
-  BoringTable,
   BoringTableOptions,
   FooterColumn,
   HeaderColumn,
-  ReturnTypeMethodFromArray,
+  ReturnTypeMethodFromArray
 } from '../core';
 import { BoringEvent, BoringEvents } from '../core/BoringEvents';
+import { Observer } from '../core/observer';
 
 export interface BoringTableType<
-  TData extends any[],
+  TData extends any[] = any,
   TPlugins extends any[] = any[],
   TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
 > {
   numberOfUpdates: number;
-  onChange: (table: BoringTable<TData, TPlugins, TColumns>) => void;
+  changeObserver: Observer;
+
   getId: (arg: TData[number]) => string;
 
+  data: TData;
+  options: BoringTableOptions<TData, TPlugins, TColumns>;
   columns: TColumns;
   headColumns: HeaderColumn<TColumns>[][];
   footerColumns: FooterColumn<TColumns>[][];
@@ -37,8 +40,10 @@ export interface BoringTableType<
 
   new (options: BoringTableOptions<TData, TPlugins, TColumns>): this;
 
-  setOnChange(cb: (table: BoringTable<TData, TPlugins, TColumns>) => void): void;
+  subscribe(cb: () => void): void;
   dispatch<T extends keyof BoringEvent>(event: T, payload?: BoringEvent[T]): void;
+  setData(data: TData): void;
+  setOptions(options: Partial<BoringTableOptions<TData, TPlugins, TColumns>>): void;
 
   composeColumns: () => void;
   configure: () => void;
@@ -76,22 +81,28 @@ export interface BoringTableType<
   createFooterRows(): BoringFooter<TColumns, TPlugins>[];
 
   createAll: () => void;
+
   updatePlugins: () => void;
   updateConfig: () => void;
   updateExtensions: () => void;
   updateEvents: () => void;
+
   updateAll: () => void;
   updateData: () => void;
   updateRows: () => void;
+
   updateHeadCell: () => void;
   updateHeadRow: () => void;
   updateHeadRows: () => void;
+
   updateBodyCell: () => void;
   updateBodyRow: () => void;
   updateBodyRows: () => void;
+
   updateFooterCell: () => void;
   updateFooterRow: () => void;
   updateFooterRows: () => void;
+
   updateCustomBody: () => void;
 }
 

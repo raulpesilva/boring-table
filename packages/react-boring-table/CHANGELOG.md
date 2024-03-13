@@ -1,5 +1,18 @@
 # react-boring-table
 
+## 0.0.16
+
+### Patch Changes
+
+- add logger
+  add update when change columns and plugins
+  add subscription to change
+
+  fix pagination
+
+- Updated dependencies
+  - boring-table@0.0.16
+
 ## 0.0.15
 
 ### Patch Changes
