@@ -1,5 +1,13 @@
 # react-boring-table
 
+## 0.0.19
+
+### Patch Changes
+
+- add array type
+- Updated dependencies
+  - boring-table@0.0.19
+
 ## 0.0.18
 
 ### Patch Changes
