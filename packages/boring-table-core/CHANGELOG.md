@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.0.18
+
+### Patch Changes
+
+- 4a95e79: fix types fetch plugin
+
 ## 0.0.17
 
 ### Patch Changes
