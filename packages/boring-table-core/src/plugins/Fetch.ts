@@ -17,6 +17,9 @@ export class FetchPlugin<
   QueryParams extends Record<string, { value: string | number | null | undefined; requestOnChange: boolean }>,
   FetchFn extends (queryString: string, queryParams: QueryParams) => Promise<{ data: any; extensions?: any }>
 > extends BoringPlugin {
+  get name() {
+    return 'fetch-plugin';
+  }
   table?: BoringTable;
 
   queryParams: QueryParams;
