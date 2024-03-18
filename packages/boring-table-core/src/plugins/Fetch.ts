@@ -1,5 +1,5 @@
-import { BoringPlugin } from '.';
-import { BoringTable } from '..';
+import type { BoringTable } from '../core';
+import { BoringPlugin } from './base';
 
 type ReturnExtension<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R>
   ? R extends { extensions: infer E }
