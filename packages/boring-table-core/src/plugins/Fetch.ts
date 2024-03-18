@@ -1,5 +1,5 @@
-import { BoringPlugin } from '.';
-import { BoringTable } from '..';
+import type { BoringTable } from '../core';
+import { BoringPlugin } from './base';
 
 type ReturnExtension<T extends (...args: any) => Promise<any>> = T extends (...args: any) => Promise<infer R>
   ? R extends { extensions: infer E }
@@ -17,6 +17,9 @@ export class FetchPlugin<
   QueryParams extends Record<string, { value: string | number | null | undefined; requestOnChange: boolean }>,
   FetchFn extends (queryString: string, queryParams: QueryParams) => Promise<{ data: any; extensions?: any }>
 > extends BoringPlugin {
+  get name() {
+    return 'fetch-plugin';
+  }
   table?: BoringTable;
 
   queryParams: QueryParams;
