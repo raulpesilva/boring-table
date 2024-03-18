@@ -1,5 +1,13 @@
 # react-boring-table
 
+## 0.0.17
+
+### Patch Changes
+
+- add fetch plugin
+- Updated dependencies
+  - boring-table@0.0.17
+
 ## 0.0.16
 
 ### Patch Changes
