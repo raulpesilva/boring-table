@@ -5,12 +5,8 @@ export const createOptions = <
   TData extends any[] = any,
   TPlugins extends IBoringPlugin[] = IBoringPlugin[],
   TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
->({
-  data: _,
-  ...options
-}: Omit<BoringTableOptions<TData, TPlugins, TColumn>, 'data'> & { data?: TData }): Omit<
-  BoringTableOptions<TData, TPlugins, TColumn>,
-  'data'
-> => {
+>(
+  options: BoringTableOptions<TData, TPlugins, TColumn>
+) => {
   return options;
 };

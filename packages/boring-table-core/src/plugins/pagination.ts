@@ -58,6 +58,12 @@ export class PaginationPlugin<
     this.setPage(this.totalPages);
   }
 
+  setPageSize(pageSize: number) {
+    this.pageSize = pageSize;
+    this.table.dispatch('update:custom-body');
+    this.table.dispatch('update:extensions');
+  }
+
   afterCreateBodyRows() {
     if (this.pageSize === 0) this.pageSize = this.table.customBody.length;
     if (this.table.customBody.length !== this.totalItems) this.page = 1;
@@ -91,6 +97,7 @@ export class PaginationPlugin<
       setPage: this.setPage.bind(this),
       fistPage: this.fistPage.bind(this),
       lastPage: this.lastPage.bind(this),
+      setPageSize: this.setPageSize.bind(this),
     };
   }
 }

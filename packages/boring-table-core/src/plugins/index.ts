@@ -1,3 +1,4 @@
+export * from './Fetch';
 export * from './RowHidden';
 export * from './RowSelection';
 export { BoringPlugin } from './base';

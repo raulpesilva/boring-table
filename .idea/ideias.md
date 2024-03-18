@@ -5,7 +5,8 @@
 adicionar returnType dos updates e fazer com que adicione com Object Assign
 deixar os métodos dos plugins opcionais
 mudar custom body para body e body para internalBody
-remover iife
+adicionar a possibilidade de receber config no construtor e no hook
+adicionar uma prop nas rows/cells para passar parâmetros (props)
 
 `createColumns<TData, TPlugins>`
 
