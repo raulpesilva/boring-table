@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.0.21
+
+### Patch Changes
+
+- add reset to fetch
+
 ## 0.0.20
 
 ### Patch Changes

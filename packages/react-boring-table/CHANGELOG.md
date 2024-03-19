@@ -1,5 +1,13 @@
 # react-boring-table
 
+## 0.0.21
+
+### Patch Changes
+
+- add reset to fetch
+- Updated dependencies
+  - boring-table@0.0.21
+
 ## 0.0.20
 
 ### Patch Changes

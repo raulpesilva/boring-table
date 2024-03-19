@@ -21,12 +21,17 @@ export class FetchPlugin<
   get name() {
     return 'fetch-plugin';
   }
+
   table?: BoringTable;
 
+  initialQueryParams: QueryParams;
   queryParams: QueryParams;
+
   fetchFn: FetchFn;
   fetchOnMount: boolean;
   loading = false;
+
+  initialExtensions: ReturnExtension<FetchFn> extends undefined ? {} : ReturnExtension<FetchFn> = {};
   extensions: ReturnExtension<FetchFn> extends undefined ? {} : ReturnExtension<FetchFn> = {};
 
   constructor(
@@ -36,8 +41,10 @@ export class FetchPlugin<
     super();
     this.fetchFn = options.fetchFn;
     this.queryParams = options.queryParams;
+    this.initialQueryParams = structuredClone(options.queryParams);
     this.fetchOnMount = options.fetchOnMount ?? true;
     if ('initialValues' in options) this.extensions = options.initialValues as any;
+    if ('initialValues' in options) this.initialExtensions = structuredClone(options.initialValues) as any;
   }
 
   configure(table: BoringTable) {
@@ -93,6 +100,22 @@ export class FetchPlugin<
     this.table?.setData(result.data);
   }
 
+  resetQueryParams() {
+    this.queryParams = structuredClone(this.initialQueryParams);
+    this.fetch();
+  }
+
+  resetExtensions() {
+    this.extensions = structuredClone(this.initialExtensions);
+    this.fetch();
+  }
+
+  reset() {
+    this.queryParams = structuredClone(this.initialQueryParams);
+    this.extensions = structuredClone(this.initialExtensions);
+    this.fetch();
+  }
+
   onUpdateExtensions(extensions: BoringTable['extensions']): void {
     Object.assign(extensions, this.extend());
   }
@@ -105,6 +128,9 @@ export class FetchPlugin<
       fetch: this.fetch.bind(this),
       setQueryParams: this.setQueryParams.bind(this),
       setQueryParam: this.setQueryParam.bind(this),
+      resetQueryParams: this.resetQueryParams.bind(this),
+      resetExtensions: this.resetExtensions.bind(this),
+      reset: this.reset.bind(this),
       ...this.extensions,
     };
   }
