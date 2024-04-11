@@ -50,7 +50,7 @@ export class PaginationPlugin<
     this.table.dispatch('update:extensions');
   }
 
-  fistPage() {
+  firstPage() {
     this.setPage(1);
   }
 
@@ -95,7 +95,7 @@ export class PaginationPlugin<
       nextPage: this.nextPage.bind(this),
       prevPage: this.prevPage.bind(this),
       setPage: this.setPage.bind(this),
-      fistPage: this.fistPage.bind(this),
+      fistPage: this.firstPage.bind(this),
       lastPage: this.lastPage.bind(this),
       setPageSize: this.setPageSize.bind(this),
     };
