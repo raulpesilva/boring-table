@@ -16,7 +16,7 @@ export class FilterPlugin<
   filterFn: (item: TData[number], criteria: TCriteria, row: any) => boolean;
   criteria: TCriteria;
   debounceTime: number;
-  timeoutId: number | undefined;
+  timeoutId: number | undefined | NodeJS.Timeout;
 
   constructor(options: {
     initialValue: TCriteria;

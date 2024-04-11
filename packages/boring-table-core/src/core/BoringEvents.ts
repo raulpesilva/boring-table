@@ -147,7 +147,7 @@ export class BoringEvents {
   events: MapEvents<BoringEvent> = new Map();
   hasScheduledUpdate = false;
   process: () => void;
-  timeoutId: number | undefined;
+  timeoutId: number | undefined | NodeJS.Timeout;
 
   constructor(options: BoringEventsOptions) {
     this.process = options.process;
