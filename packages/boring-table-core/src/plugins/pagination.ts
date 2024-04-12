@@ -95,7 +95,7 @@ export class PaginationPlugin<
       nextPage: this.nextPage.bind(this),
       prevPage: this.prevPage.bind(this),
       setPage: this.setPage.bind(this),
-      fistPage: this.firstPage.bind(this),
+      firstPage: this.firstPage.bind(this),
       lastPage: this.lastPage.bind(this),
       setPageSize: this.setPageSize.bind(this),
     };

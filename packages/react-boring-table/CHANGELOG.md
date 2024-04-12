@@ -1,5 +1,13 @@
 # react-boring-table
 
+## 0.0.23
+
+### Patch Changes
+
+- fix: pagination extension typo
+- Updated dependencies
+  - boring-table@0.0.23
+
 ## 0.0.22
 
 ### Patch Changes
