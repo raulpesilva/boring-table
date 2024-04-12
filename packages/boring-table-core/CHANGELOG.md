@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.0.23
+
+### Patch Changes
+
+- fix: pagination extension typo
+
 ## 0.0.22
 
 ### Patch Changes
