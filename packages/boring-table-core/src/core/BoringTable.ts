@@ -326,6 +326,8 @@ export class BoringTable<
       events.forEach(({ rowIndex, columnIndex }) => this.updateBodyCell(rowIndex, columnIndex));
     }
 
+    if (this.events.has('update:custom-body')) this.updateCustomBody();
+
     if (this.events.has('update:head-rows')) this.updateHeadRows();
     if (this.events.has('update:head-row')) {
       const events = this.events.get('update:head-row');
@@ -347,7 +349,6 @@ export class BoringTable<
     }
 
     if (this.events.has('update:rows')) this.updateRows();
-    if (this.events.has('update:custom-body')) this.updateCustomBody();
     if (this.events.has('update:extensions')) this.updateExtensions();
 
     this.numberOfUpdates++;

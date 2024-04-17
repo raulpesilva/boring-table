@@ -5,11 +5,12 @@ export class RowSelectPlugin extends BoringPlugin {
   get name() {
     return 'row-select-plugin';
   }
-  priority = BASE_PRIORITIES.DEFAULT;
+  priority = BASE_PRIORITIES.SHOULD_BE_LAST;
   table?: BoringTable;
 
   selectedRows: Map<string, BoringTable['body'][number]> = new Map();
   isAllSelected = false;
+  isAllVisibleSelected = false;
   hasSelectedRows = false;
 
   constructor() {
@@ -32,6 +33,9 @@ export class RowSelectPlugin extends BoringPlugin {
       this.isAllSelected = this.selectedRows.size >= (this.table?.body.length ?? 0) && this.hasSelectedRows;
       if (!ignoreEvent) this.table?.dispatch('update:head-rows');
     }
+    const isAllVisibleSelected = !!this.table?.customBody.every((item) => item.selected);
+    if (isAllVisibleSelected !== this.isAllVisibleSelected) this.table?.dispatch('update:head-rows');
+    this.isAllVisibleSelected = isAllVisibleSelected;
   }
 
   toggleBody = (row: BoringTable['body'][number], value?: boolean, ignoreEvent?: boolean) => {
@@ -52,8 +56,26 @@ export class RowSelectPlugin extends BoringPlugin {
     this.table?.dispatch('update:extensions');
   }
 
+  resetVisibleSelections() {
+    this.table?.customBody.forEach((row) => {
+      this.selectedRows.delete(row.rawId);
+      row.selected = false;
+    });
+    this.updateUtils(true);
+    this.table?.dispatch('update:body-rows');
+    this.table?.dispatch('update:head-rows');
+    this.table?.dispatch('update:extensions');
+  }
+
   selectAll() {
     this.table?.body.forEach((row) => this.toggleBody(row, true, true));
+    this.table?.dispatch('update:body-rows');
+    this.table?.dispatch('update:head-rows');
+    this.table?.dispatch('update:extensions');
+  }
+
+  allVisibleSelect() {
+    this.table?.customBody.forEach((row) => this.toggleBody(row, true, true));
     this.table?.dispatch('update:body-rows');
     this.table?.dispatch('update:head-rows');
     this.table?.dispatch('update:extensions');
@@ -62,9 +84,12 @@ export class RowSelectPlugin extends BoringPlugin {
   onCreateHeadRow() {
     return {
       isAllSelected: this.isAllSelected,
+      isAllVisibleSelected: this.isAllVisibleSelected,
       hasSelectedRows: this.hasSelectedRows,
       resetSelections: this.resetSelections.bind(this),
+      resetVisibleSelections: this.resetVisibleSelections.bind(this),
       selectAll: this.selectAll.bind(this),
+      allVisibleSelect: this.allVisibleSelect.bind(this),
     };
   }
 
@@ -81,6 +106,7 @@ export class RowSelectPlugin extends BoringPlugin {
   onUpdateHeadRows(rows: BoringTable['head']) {
     rows.forEach((row) => {
       row.isAllSelected = this.isAllSelected;
+      row.isAllVisibleSelected = this.isAllVisibleSelected;
       row.hasSelectedRows = this.hasSelectedRows;
     });
   }
@@ -88,6 +114,18 @@ export class RowSelectPlugin extends BoringPlugin {
   onCreateBodyRow(row: BoringTable['body'][number]) {
     row.selected = this.selectedRows.has(row.rawId);
     return { selected: !!row.selected, toggleSelect: (value?: boolean) => this.toggleBody(row, value) };
+  }
+
+  onUpdateBodyRows(): void {
+    this.updateUtils(true);
+    this.table?.dispatch('update:head-rows');
+    this.table?.dispatch('update:extensions');
+  }
+
+  onUpdateCustomBody(): void {
+    this.updateUtils(true);
+    this.table?.dispatch('update:head-rows');
+    this.table?.dispatch('update:extensions');
   }
 
   onUpdateExtensions(extensions: BoringTable['extensions']): void {
@@ -99,10 +137,13 @@ export class RowSelectPlugin extends BoringPlugin {
     const selectedRows = body.filter((i) => this.selectedRows.has(i.rawId));
     return {
       resetSelections: this.resetSelections.bind(this),
+      resetVisibleSelections: this.resetVisibleSelections.bind(this),
       selectAll: this.selectAll.bind(this),
+      allVisibleSelect: this.allVisibleSelect.bind(this),
       selectedRows: selectedRows,
       hasSelectedRows: this.hasSelectedRows,
       isAllSelected: this.isAllSelected,
+      isAllVisibleSelected: this.isAllVisibleSelected,
     };
   }
 }
