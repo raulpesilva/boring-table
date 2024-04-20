@@ -43,8 +43,8 @@ export class PaginationPlugin<
     this.table.dispatch('update:extensions');
   }
 
-  setPage(page: number) {
-    if (page < 1 || page > this.totalPages) return;
+  setPage(page: number, force?: boolean) {
+    if ((page < 1 || page > this.totalPages) && !force) return;
     this.page = page;
     this.table.dispatch('update:custom-body');
     this.table.dispatch('update:extensions');
