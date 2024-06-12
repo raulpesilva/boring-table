@@ -47,7 +47,7 @@ export class RowSelectPlugin extends BoringPlugin {
     if (!ignoreEvent) this.table?.dispatch('update:extensions');
   };
 
-  resetSelections() {
+  unselectAll() {
     this.selectedRows.clear();
     this.table?.body.forEach((row) => (row.selected = false));
     this.updateUtils(true);
@@ -56,7 +56,7 @@ export class RowSelectPlugin extends BoringPlugin {
     this.table?.dispatch('update:extensions');
   }
 
-  resetVisibleSelections() {
+  unselectAllVisible() {
     this.table?.customBody.forEach((row) => {
       this.selectedRows.delete(row.rawId);
       row.selected = false;
@@ -74,7 +74,7 @@ export class RowSelectPlugin extends BoringPlugin {
     this.table?.dispatch('update:extensions');
   }
 
-  allVisibleSelect() {
+  selectAllVisible() {
     this.table?.customBody.forEach((row) => this.toggleBody(row, true, true));
     this.table?.dispatch('update:body-rows');
     this.table?.dispatch('update:head-rows');
@@ -83,13 +83,16 @@ export class RowSelectPlugin extends BoringPlugin {
 
   onCreateHeadRow() {
     return {
+      selectAll: this.selectAll.bind(this),
+      unselectAll: this.unselectAll.bind(this),
+
+      selectAllVisible: this.selectAllVisible.bind(this),
+      unselectAllVisible: this.unselectAllVisible.bind(this),
+
+      hasSelectedRows: this.hasSelectedRows,
+
       isAllSelected: this.isAllSelected,
       isAllVisibleSelected: this.isAllVisibleSelected,
-      hasSelectedRows: this.hasSelectedRows,
-      resetSelections: this.resetSelections.bind(this),
-      resetVisibleSelections: this.resetVisibleSelections.bind(this),
-      selectAll: this.selectAll.bind(this),
-      allVisibleSelect: this.allVisibleSelect.bind(this),
     };
   }
 
@@ -135,15 +138,22 @@ export class RowSelectPlugin extends BoringPlugin {
   extend() {
     const body = this.table?.body ?? [];
     const selectedRows = body.filter((i) => this.selectedRows.has(i.rawId));
+    const selectedItems: BoringTable['data'] = selectedRows.map((r) => this.table?.data[r.index]);
+
     return {
-      resetSelections: this.resetSelections.bind(this),
-      resetVisibleSelections: this.resetVisibleSelections.bind(this),
       selectAll: this.selectAll.bind(this),
-      allVisibleSelect: this.allVisibleSelect.bind(this),
-      selectedRows: selectedRows,
+      unselectAll: this.unselectAll.bind(this),
+
+      selectAllVisible: this.selectAllVisible.bind(this),
+      unselectAllVisible: this.unselectAllVisible.bind(this),
+
       hasSelectedRows: this.hasSelectedRows,
+
       isAllSelected: this.isAllSelected,
       isAllVisibleSelected: this.isAllVisibleSelected,
+
+      selectedRows: selectedRows,
+      selectedItems: selectedItems,
     };
   }
 }

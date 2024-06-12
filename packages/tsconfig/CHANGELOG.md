@@ -1,5 +1,11 @@
 # tsconfig
 
+## 0.1.0
+
+### Minor Changes
+
+- add selectedItems and rename exports
+
 ## 0.0.21
 
 ### Patch Changes
