@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.1.0
+
+### Minor Changes
+
+- add selectedItems and rename exports
+
 ## 0.0.23
 
 ### Patch Changes
