@@ -1,5 +1,13 @@
 # react-boring-table
 
+## 0.1.1
+
+### Patch Changes
+
+- export helper types
+- Updated dependencies
+  - boring-table@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
