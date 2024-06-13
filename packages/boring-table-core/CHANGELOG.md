@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.1.1
+
+### Patch Changes
+
+- export helper types
+
 ## 0.1.0
 
 ### Minor Changes
