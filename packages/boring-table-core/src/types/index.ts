@@ -1,15 +1,16 @@
-import {
+import type {
   BoringBody,
   BoringColumn,
   BoringFooter,
   BoringHead,
+  BoringTable,
   BoringTableOptions,
   FooterColumn,
   HeaderColumn,
-  ReturnTypeMethodFromArray
+  ReturnTypeMethodFromArray,
 } from '../core';
-import { BoringEvent, BoringEvents } from '../core/BoringEvents';
-import { Observer } from '../core/observer';
+import type { BoringEvent, BoringEvents } from '../core/BoringEvents';
+import type { Observer } from '../core/observer';
 
 export interface BoringTableType<
   TData extends any[] = any,
@@ -110,7 +111,7 @@ export type THead<T extends { head: any[] }> = T['head'];
 export type TBody<T extends { body: any[] }> = T['body'];
 export type TFooter<T extends { footer: any[] }> = T['footer'];
 
-type TValues<T extends { cells: { value: any }[] }[]> = T[number]['cells'][number]['value'];
+export type TValues<T extends { cells: { value: any }[] }[]> = T[number]['cells'][number]['value'];
 
 export type THeadValue<T extends { head: { cells: { value: any }[] }[] }> = TValues<T['head']>;
 export type TBodyValue<T extends { body: { cells: { value: any }[] }[] }> = TValues<T['body']>;
@@ -121,3 +122,9 @@ export type TExtensions<T extends { extensions: any }> = T['extensions'];
 export type TColumns<T extends { columns: any }> = T['columns'];
 export type TData<T extends { data: any }> = T['data'];
 export type TPlugins<T extends { plugins: any }> = T['plugins'];
+
+export type InferTableType<T extends BoringTableOptions<any[], any[], any[]>> = BoringTable<
+  T['data'],
+  Exclude<T['plugins'], undefined>,
+  T['columns']
+>;

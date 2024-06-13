@@ -53,7 +53,7 @@ export type ExtractExtra<
     }
 >;
 
-type GetBodyRow<TData extends any[], TPlugins extends any[] = any[]> = Simplify<
+export type GetBodyRow<TData extends any[], TPlugins extends any[] = any[]> = Simplify<
   Partial<
     UnionToIntersection<
       | BaseRow<TData[number], UnionToIntersection<ReturnMethodValue<TPlugins, 'onCreateBodyCell'> | BaseCell>>
