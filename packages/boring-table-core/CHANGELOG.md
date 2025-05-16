@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.1.2
+
+### Patch Changes
+
+- Add use-sync-external-store for compatibility
+
 ## 0.1.1
 
 ### Patch Changes

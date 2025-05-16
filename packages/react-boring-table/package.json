@@ -1,6 +1,6 @@
 {
   "name": "react-boring-table",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Next generation of Headless UI Table && DataGrid",
   "author": "raulpesilva",
   "license": "MIT",
@@ -49,10 +49,13 @@
   "devDependencies": {
     "@types/react": "^18.2.64",
     "react": "^18.2.0",
-    "tsconfig": "workspace:*"
+    "tsconfig": "workspace:*",
+    "use-sync-external-store": "^1.5.0",
+    "@types/use-sync-external-store": "^1.5.0"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "use-sync-external-store": ">=1.2.0"
   },
   "publishConfig": {
     "access": "public"

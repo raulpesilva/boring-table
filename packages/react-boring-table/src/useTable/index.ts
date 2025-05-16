@@ -1,7 +1,9 @@
-
 import { BoringColumn, BoringTableOptions, IBoringPlugin, createBoringTable } from 'boring-table';
 import React from 'react';
+import useSyncExternalStoreExports from 'use-sync-external-store/shim';
 import { shallowEqual } from '../utils';
+
+const { useSyncExternalStore } = useSyncExternalStoreExports;
 
 export const useTable = <
   TData extends any[] = any,
@@ -12,7 +14,7 @@ export const useTable = <
 ) => {
   const [prevOptions, setPrevOptions] = React.useState(() => options);
   const [table] = React.useState(() => createBoringTable(options));
-  React.useSyncExternalStore(
+  useSyncExternalStore(
     table.subscribe,
     () => table.numberOfUpdates,
     () => table.numberOfUpdates
