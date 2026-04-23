@@ -35,7 +35,7 @@
     "start": "tsup",
     "dev": "tsup --watch",
     "clean": "rimraf ./dist && rimraf ./coverage",
-    "lint": "tsc .",
+    "lint": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage"
