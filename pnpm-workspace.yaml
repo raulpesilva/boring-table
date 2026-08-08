@@ -2,8 +2,38 @@ packages:
   - packages/*
   - docs
 
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - '@turbo/darwin-64@2.10.9'
+  - '@turbo/darwin-arm64@2.10.9'
+  - '@turbo/linux-64@2.10.9'
+  - '@turbo/linux-arm64@2.10.9'
+  - '@turbo/windows-64@2.10.9'
+  - '@turbo/windows-arm64@2.10.9'
+  - turbo@2.10.9
+  - seroval@1.4.1
+  - diff@8.0.3
+  - undici@7.24.0
+  - h3@2.0.1
+  - h3@2.0.1-rc.15
+  - h3@2.0.1-rc.18
+  - srvx@0.11.13
+  - picomatch@2.3.2
+  - picomatch@4.0.4
+  - '@tanstack/start-server-core@1.167.30'
+  - esbuild@0.28.1
+  - undici@7.28.0
+  - js-yaml@3.15.0
+  - js-yaml@4.1.2
+  - '@babel/core@7.29.1'
+  - js-yaml@4.3.0
+  - seroval@1.5.3
+  - undici@7.29.0
+  - js-yaml@3.15.1
+  - js-yaml@4.3.1
 
 overrides:
-  esbuild@<=0.24.2: '>=0.25.0'
+  esbuild: 0.28.1
+  vitefu: 1.1.3

@@ -33,7 +33,7 @@ function Home() {
       <div className='home-container'>
         {/* Grain overlay */}
         <div className='grain-overlay' />
-        
+
         {/* Floating decorative elements */}
         <div className='floating-shapes'>
           <div className='shape shape-1' />
@@ -49,13 +49,13 @@ function Home() {
               <span className='status-badge'>Headless</span>
               <span className='status-badge'>TypeScript</span>
             </div>
-            
+
             <h1 className='hero-title'>
               <span className='title-line title-line-1'>Tables don't</span>
               <span className='title-line title-line-2'>have to be</span>
               <span className='title-line title-line-3 title-accent'>boring.</span>
             </h1>
-            
+
             <p className='hero-description'>
               A headless, framework-agnostic table library with a powerful plugin system. Full control over your UI.
               Zero opinions. Infinite possibilities.
@@ -129,10 +129,7 @@ function Home() {
                 </div>
                 <span className='code-filename'>table.ts</span>
               </div>
-              <div 
-                className='code-content' 
-                dangerouslySetInnerHTML={{ __html: codeHtml }} 
-              />
+              <div className='code-content' dangerouslySetInnerHTML={{ __html: codeHtml }} />
             </div>
           </div>
 

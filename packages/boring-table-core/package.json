@@ -1,53 +1,47 @@
 {
   "name": "boring-table",
   "version": "0.1.2",
-  "description": "Next generation of Headless UI Table && DataGrid",
-  "author": "raulpesilva",
-  "license": "MIT",
   "private": false,
+  "description": "Next generation of Headless UI Table && DataGrid",
+  "license": "MIT",
+  "author": "raulpesilva",
   "repository": {
     "type": "git",
     "url": "https://github.com/raulpesilva/boring-table.git"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
-  "types": "build/legacy/index.d.ts",
-  "main": "build/legacy/index.cjs",
-  "module": "build/legacy/index.js",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
       "import": {
-        "types": "./build/modern/index.d.ts",
-        "default": "./build/modern/index.js"
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
       },
       "require": {
-        "types": "./build/modern/index.d.cts",
-        "default": "./build/modern/index.cjs"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
-  "sideEffects": false,
-  "files": [
-    "build",
-    "src"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsup",
-    "start": "tsup",
-    "dev": "tsup --watch",
-    "clean": "rimraf ./dist && rimraf ./coverage",
-    "lint": "tsc .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "coverage": "vitest run --coverage"
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "clean": "rimraf ./dist ./coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsconfig": "workspace:*"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "devDependencies": {
-    "tsconfig": "workspace:*",
-    "type-fest": "^4.12.0"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

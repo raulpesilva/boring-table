@@ -8,7 +8,7 @@ const { useSyncExternalStore } = useSyncExternalStoreExports;
 export const useTable = <
   TData extends any[] = any,
   TPlugins extends IBoringPlugin[] = IBoringPlugin[],
-  TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[],
 >(
   options: BoringTableOptions<TData, TPlugins, TColumn>
 ) => {

@@ -64,8 +64,8 @@ const table = createBoringTable({
 });
 
 // Access table data
-console.log(table.head);   // Header rows
-console.log(table.body);   // Body rows
+console.log(table.head); // Header rows
+console.log(table.body); // Body rows
 console.log(table.footer); // Footer rows
 ```
 
@@ -125,9 +125,9 @@ Columns define how data is transformed into table cells. Each column has three o
 ```typescript
 const columns = [
   {
-    head: (cell, table) => 'Header Value',           // Header cell
-    body: (item, cell, table) => item.someProperty,  // Body cell (required)
-    footer: (cell, table) => 'Footer Value',         // Footer cell
+    head: (cell, table) => 'Header Value', // Header cell
+    body: (item, cell, table) => item.someProperty, // Body cell (required)
+    footer: (cell, table) => 'Footer Value', // Footer cell
   },
 ];
 ```
@@ -140,14 +140,11 @@ Use arrays to create multiple header or footer rows:
 const columns = [
   {
     head: [
-      () => 'Group Header',  // First header row
+      () => 'Group Header', // First header row
       () => 'Column Header', // Second header row
     ],
     body: (item) => item.value,
-    footer: [
-      () => 'Subtotal',
-      () => 'Total',
-    ],
+    footer: [() => 'Subtotal', () => 'Total'],
   },
 ];
 ```
@@ -163,10 +160,7 @@ const table = createBoringTable({
   data,
   getId: (item) => item.id,
   columns,
-  plugins: [
-    new PaginationPlugin({ pageSize: 10 }),
-    new RowSelectPlugin(),
-  ],
+  plugins: [new PaginationPlugin({ pageSize: 10 }), new RowSelectPlugin()],
 });
 ```
 
@@ -179,9 +173,9 @@ Adds pagination support:
 ```typescript
 import { PaginationPlugin } from 'boring-table';
 
-const pagination = new PaginationPlugin({ 
-  page: 1,      // Initial page
-  pageSize: 10  // Items per page
+const pagination = new PaginationPlugin({
+  page: 1, // Initial page
+  pageSize: 10, // Items per page
 });
 
 const table = createBoringTable({
@@ -200,8 +194,8 @@ table.extensions.lastPage();
 table.extensions.setPageSize(20);
 
 // Access pagination state
-table.extensions.page;       // Current page
-table.extensions.pageSize;   // Items per page
+table.extensions.page; // Current page
+table.extensions.pageSize; // Items per page
 table.extensions.totalPages; // Total number of pages
 table.extensions.totalItems; // Total items count
 ```
@@ -221,9 +215,9 @@ const table = createBoringTable({
 });
 
 // Row-level selection (available on each body row)
-table.body[0].toggleSelect();     // Toggle selection
+table.body[0].toggleSelect(); // Toggle selection
 table.body[0].toggleSelect(true); // Select
-table.body[0].selected;           // Check if selected
+table.body[0].selected; // Check if selected
 
 // Bulk operations via extensions
 table.extensions.selectAll();
@@ -232,10 +226,10 @@ table.extensions.selectAllVisible();
 table.extensions.unselectAllVisible();
 
 // Access selection state
-table.extensions.selectedRows;        // Array of selected rows
-table.extensions.selectedItems;       // Array of selected data items
-table.extensions.hasSelectedRows;     // Boolean
-table.extensions.isAllSelected;       // Boolean
+table.extensions.selectedRows; // Array of selected rows
+table.extensions.selectedItems; // Array of selected data items
+table.extensions.hasSelectedRows; // Boolean
+table.extensions.isAllSelected; // Boolean
 table.extensions.isAllVisibleSelected; // Boolean
 ```
 
@@ -286,9 +280,9 @@ const table = createBoringTable({
 });
 
 // Row-level hiding
-table.body[0].toggleHidden();     // Toggle visibility
+table.body[0].toggleHidden(); // Toggle visibility
 table.body[0].toggleHidden(true); // Hide
-table.body[0].hidden;             // Check if hidden
+table.body[0].hidden; // Check if hidden
 
 // Bulk operations
 table.extensions.hiddenAll();
@@ -296,7 +290,7 @@ table.extensions.resetHidden();
 
 // Access hidden state
 table.extensions.hiddenRows; // Array of hidden rows
-table.extensions.hasHidden;  // Boolean
+table.extensions.hasHidden; // Boolean
 table.extensions.isAllHidden; // Boolean
 ```
 
@@ -341,11 +335,11 @@ Each cell contains:
 
 ```typescript
 {
-  id: string;       // Unique cell identifier
-  rawId: string;    // Row's rawId
-  index: number;    // Column index
+  id: string; // Unique cell identifier
+  rawId: string; // Row's rawId
+  index: number; // Column index
   rowIndex: number; // Row index
-  value: any;       // Cell value (return value from column function)
+  value: any; // Cell value (return value from column function)
   getRow: () => Row; // Function to get parent row
 }
 ```
@@ -401,24 +395,43 @@ class MyCustomPlugin extends BoringPlugin {
 
 ### Plugin Lifecycle Hooks
 
-| Hook | Description |
-|------|-------------|
-| `onMount` | Called when table is initialized |
-| `configure(table)` | Configure plugin with table reference |
-| `extend()` | Return object to merge into `table.extensions` |
-| `beforeCreateBodyRows(data)` | Before body rows are created |
-| `onCreateBodyRow(row)` | Add properties to each body row |
-| `onCreateBodyCell(cell)` | Add properties to each body cell |
-| `afterCreateBodyRows(rows, data)` | After body rows are created |
-| `onUpdateCustomBody(rows)` | Modify the customBody array |
-| `onUpdateExtensions(extensions)` | Update extensions object |
+| Hook                              | Description                                    |
+| --------------------------------- | ---------------------------------------------- |
+| `onMount`                         | Called when table is initialized               |
+| `configure(table)`                | Configure plugin with table reference          |
+| `extend()`                        | Return object to merge into `table.extensions` |
+| `beforeCreateBodyRows(data)`      | Before body rows are created                   |
+| `onCreateBodyRow(row)`            | Add properties to each body row                |
+| `onCreateBodyCell(cell)`          | Add properties to each body cell               |
+| `afterCreateBodyRows(rows, data)` | After body rows are created                    |
+| `onUpdateCustomBody(rows)`        | Modify the customBody array                    |
+| `onUpdateExtensions(extensions)`  | Update extensions object                       |
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
-| `boring-table` | Core headless table library |
+| Package              | Description                         |
+| -------------------- | ----------------------------------- |
+| `boring-table`       | Core headless table library         |
 | `react-boring-table` | React bindings with `useTable` hook |
+
+## Development
+
+The workspace uses Node.js 24 and pnpm 11. Install dependencies and run the complete validation pipeline with:
+
+```bash
+pnpm install
+pnpm check
+```
+
+Useful commands:
+
+- `pnpm dev` — watch the packages and documentation app
+- `pnpm test:watch` — run Vitest in watch mode
+- `pnpm coverage` — run tests with V8 coverage thresholds
+- `pnpm lint:fix` — apply safe Oxlint fixes
+- `pnpm format` — format the workspace with Oxfmt
+
+Package builds use tsdown and emit ESM, CommonJS, source maps, and declarations in `dist`.
 
 ## License
 

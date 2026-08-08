@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true,
+    "node": true
+  },
+  "ignorePatterns": [
+    "**/.output/**",
+    "**/.source/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "docs/src/routeTree.gen.ts",
+    "packages/react-boring-table/src/example/**"
+  ],
+  "options": {
+    "denyWarnings": true
+  },
+  "plugins": ["typescript", "react", "import", "promise"],
+  "rules": {
+    "eslint/no-extra-boolean-cast": "off",
+    "eslint/no-shadow": "off",
+    "eslint/no-underscore-dangle": "off",
+    "eslint/no-unused-vars": [
+      "warn",
+      {
+        "args": "all",
+        "argsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "vars": "all",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "promise/no-callback-in-promise": "off",
+    "promise/no-multiple-resolved": "off",
+    "react/react-in-jsx-scope": "off"
+  }
+}

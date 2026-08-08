@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, useLocation } from '@tanstack/react-router';
+import { createFileRoute, notFound } from '@tanstack/react-router';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { createServerFn } from '@tanstack/react-start';
 import { source } from '@/lib/source';
@@ -25,7 +25,7 @@ type PageTreeFolder = Extract<PageTreeNode, { type: 'folder' }>;
 const serverLoader = createServerFn({
   method: 'GET',
 })
-  .inputValidator((slugs: string[]) => slugs)
+  .validator((slugs: string[]) => slugs)
   .handler(async ({ data: slugs }) => {
     const page = source.getPage(slugs);
     if (!page) throw notFound();
@@ -87,7 +87,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
 function Page() {
   const data = Route.useLoaderData();
   const { pageTree } = useFumadocsLoader(data);
-  const Content = clientLoader.getComponent(data.path);
+  const content = clientLoader.useContent(data.path);
 
   return (
     <DocsLayout
@@ -104,9 +104,8 @@ function Page() {
             url: '/docs/boring-table-core',
           },
         ],
-      }}
-    >
-      <Content />
+      }}>
+      {content}
     </DocsLayout>
   );
 }

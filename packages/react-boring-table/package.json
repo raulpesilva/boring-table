@@ -1,63 +1,61 @@
 {
   "name": "react-boring-table",
   "version": "0.1.2",
-  "description": "Next generation of Headless UI Table && DataGrid",
-  "author": "raulpesilva",
-  "license": "MIT",
   "private": false,
+  "description": "Next generation of Headless UI Table && DataGrid",
+  "license": "MIT",
+  "author": "raulpesilva",
   "repository": {
     "type": "git",
     "url": "https://github.com/raulpesilva/boring-table.git"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
-  "types": "build/legacy/index.d.ts",
-  "main": "build/legacy/index.cjs",
-  "module": "build/legacy/index.js",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
       "import": {
-        "types": "./build/modern/index.d.ts",
-        "default": "./build/modern/index.js"
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
       },
       "require": {
-        "types": "./build/modern/index.d.cts",
-        "default": "./build/modern/index.cjs"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
-  "sideEffects": false,
-  "files": [
-    "build",
-    "src"
-  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsup ",
-    "start": "tsup",
-    "dev": "tsup --watch",
-    "clean": "rimraf ./dist && rimraf ./coverage",
-    "lint": "tsc .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "coverage": "vitest run --coverage"
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "clean": "rimraf ./dist ./coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "boring-table": "workspace:*",
+    "use-sync-external-store": "^1.5.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "@types/use-sync-external-store": "^1.5.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tsconfig": "workspace:*",
+    "use-sync-external-store": "^1.5.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "boring-table": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.64",
-    "react": "^18.2.0",
-    "tsconfig": "workspace:*",
-    "use-sync-external-store": "^1.5.0",
-    "@types/use-sync-external-store": "^1.5.0"
-  },
-  "peerDependencies": {
-    "react": "^18.0.0",
-    "use-sync-external-store": ">=1.2.0"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

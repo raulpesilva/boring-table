@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit
+      - run: pnpm check
+      - run: |
+          mkdir artifacts
+          pnpm --dir packages/boring-table-core pack --pack-destination ../../artifacts
+          pnpm --dir packages/react-boring-table pack --pack-destination ../../artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: artifacts/*.tgz
+
+  consumer-smoke:
+    needs: quality
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 24]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: artifacts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          mkdir fixture
+          cd fixture
+          npm init --yes
+          npm install ../artifacts/boring-table-*.tgz ../artifacts/react-boring-table-*.tgz react@18 use-sync-external-store
+          node --input-type=module --eval "import assert from 'node:assert/strict'; import { createBoringTable } from 'boring-table'; import { useTable } from 'react-boring-table'; const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"
+          node --eval "const assert = require('node:assert/strict'); const { createBoringTable } = require('boring-table'); const { useTable } = require('react-boring-table'); const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"

@@ -15,7 +15,7 @@ import type { Observer } from '../core/observer';
 export interface BoringTableType<
   TData extends any[] = any,
   TPlugins extends any[] = any[],
-  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[],
 > {
   numberOfUpdates: number;
   changeObserver: Observer;
