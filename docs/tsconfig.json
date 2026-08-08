@@ -1,25 +1,37 @@
 {
-  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "allowJs": true,
+    "skipLibCheck": true,
     "strict": true,
+    "noEmit": true,
     "esModuleInterop": true,
-    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["vite/client"],
-    "isolatedModules": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "target": "ES2022",
-    "allowImportingTsExtensions": true,
-    "allowJs": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
     "forceConsistentCasingInFileNames": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./*"],
       "fumadocs-mdx:collections/*": [".source/*"]
-    },
-    "noEmit": true
-  }
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    ".source/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
 }

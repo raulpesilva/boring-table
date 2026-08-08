@@ -3,6 +3,8 @@ dist
 build
 coverage
 tsconfig.tsbuildinfo
+.next
+.source
 
 # turbo
 .turbo

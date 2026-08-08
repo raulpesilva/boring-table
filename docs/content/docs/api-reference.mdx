@@ -1,0 +1,78 @@
+---
+title: API reference
+description: Reference for the factories, table model, React hook, plugin base class, and built-in plugins.
+---
+
+## createBoringTable
+
+Creates a `BoringTable` instance and immediately processes its options.
+
+```ts
+const table = createBoringTable({ data, getId, columns, plugins });
+```
+
+The returned instance exposes `head`, `body`, `customBody`, `footer`, `extensions`, `setData`, `setOptions`, `reset`,
+`subscribe`, and `waitForUpdates`.
+
+## createOptions
+
+Returns the supplied options unchanged while preserving generic inference for data, columns, and plugins.
+
+```ts
+const options = createOptions({ data, getId, columns, plugins });
+```
+
+## useTable
+
+Creates one table instance for a React component, updates it when options change, and subscribes to its update counter.
+
+```tsx
+const table = useTable({ data, getId, columns, plugins });
+```
+
+Available from `react-boring-table`, which also re-exports the core API.
+
+## BoringTable
+
+The central row-model assembly. Construct it through `createBoringTable` unless you need the class directly.
+
+### Options
+
+| Option    | Required | Description                                                  |
+| --------- | -------- | ------------------------------------------------------------ |
+| `data`    | Yes      | Array of source items.                                       |
+| `getId`   | Yes      | Returns the stable raw ID for an item.                       |
+| `columns` | Yes      | Functions that produce header, body, and footer cell values. |
+| `plugins` | No       | Ordered plugin instances.                                    |
+
+## BoringPlugin
+
+Base class for extending the table lifecycle. A plugin identifies itself with `name`, receives the table in
+`configure`, and may return additions from row/cell hooks or `extend()`.
+
+```ts
+class MyPlugin extends BoringPlugin {
+  get name() {
+    return 'my-plugin';
+  }
+}
+```
+
+## PaginationPlugin
+
+Adds `nextPage`, `prevPage`, `setPage`, `firstPage`, `lastPage`, `setPageSize`, and pagination state to
+`table.extensions`. Its row transform slices `customBody` to the active page.
+
+## FilterPlugin
+
+Stores typed criteria and filters `customBody`. Configure a predicate, initial value, and optional debounce time.
+
+## RowSelectPlugin
+
+Decorates body rows with `selected` and `toggleSelect`, then exposes bulk selection state and methods through
+`table.extensions`.
+
+## HiddenRowPlugin
+
+Decorates rows with `hidden` and `toggleHidden`. It also exposes aggregate visibility state, `hiddenAll`, and
+`resetHidden`.

@@ -1,0 +1,74 @@
+---
+title: Plugins
+description: Compose filtering, pagination, row selection, data fetching, and custom behavior through one lifecycle.
+---
+
+Plugins participate in table creation and updates. They can transform `customBody`, decorate rows and cells, and add
+typed values or methods to `table.extensions`.
+
+## Built-in plugins
+
+| Plugin             | Adds                                                          |
+| ------------------ | ------------------------------------------------------------- |
+| `FilterPlugin`     | Criteria state, optional debounce, and filtered `customBody`. |
+| `PaginationPlugin` | Page state, page-size controls, and sliced `customBody`.      |
+| `RowSelectPlugin`  | Row selection flags plus bulk selection methods.              |
+| `HiddenRowPlugin`  | Row visibility flags and reset/hide-all controls.             |
+| `ChangePlugin`     | Immutable row-data updates.                                   |
+| `FetchPlugin`      | Query parameters, request state, and fetched results.         |
+| `SwapRowPlugin`    | Row-order changes.                                            |
+
+## Compose a pipeline
+
+```ts
+import { FilterPlugin, PaginationPlugin, RowSelectPlugin, createBoringTable } from 'boring-table';
+
+const table = createBoringTable({
+  data: people,
+  getId: (person) => person.id,
+  columns,
+  plugins: [
+    new FilterPlugin({
+      initialValue: '',
+      filter: (person, query) => person.name.includes(query),
+    }),
+    new PaginationPlugin({ page: 1, pageSize: 25 }),
+    new RowSelectPlugin(),
+  ],
+});
+
+table.extensions.filter('Ada');
+table.extensions.nextPage();
+table.extensions.selectAllVisible();
+```
+
+Plugin order is meaningful because each `onUpdateCustomBody` hook receives the current pipeline output.
+
+## Create a plugin
+
+Extend `BoringPlugin` and implement only the lifecycle stages you need.
+
+```ts
+import { BoringPlugin } from 'boring-table';
+
+class RowStatusPlugin extends BoringPlugin {
+  get name() {
+    return 'row-status';
+  }
+
+  onCreateBodyRow(row) {
+    return {
+      status: row.index % 2 === 0 ? 'even' : 'odd',
+    };
+  }
+
+  extend() {
+    return {
+      statusMode: 'striped' as const,
+    };
+  }
+}
+```
+
+Useful stages include `configure`, `onMount`, `beforeCreateBodyRows`, `onCreateBodyRow`, `onCreateBodyCell`,
+`onUpdateCustomBody`, `onUpdateExtensions`, and `onReset`.

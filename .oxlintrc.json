@@ -11,11 +11,13 @@
     "node": true
   },
   "ignorePatterns": [
+    "**/.next/**",
     "**/.output/**",
     "**/.source/**",
     "**/build/**",
     "**/coverage/**",
     "**/dist/**",
+    "docs/next-env.d.ts",
     "docs/src/routeTree.gen.ts",
     "packages/react-boring-table/src/example/**"
   ],

@@ -1,8 +1,77 @@
 ---
-title: React Boring Table
-description: Documentation for react-boring-table
+title: React binding
+description: Use the Boring Table row model in React 18 and 19 with the useTable hook.
 ---
 
-# React Boring Table
+`react-boring-table` re-exports the core and adds `useTable`. The hook keeps one table instance, updates its options
+when inputs change, and subscribes React through `useSyncExternalStore`.
 
-Documentation for the React adapter.
+## Create the model
+
+```tsx
+import { useTable } from 'react-boring-table';
+
+export function PeopleTable({ people }: { people: Person[] }) {
+  const table = useTable({
+    data: people,
+    getId: (person) => person.id,
+    columns: [
+      { head: () => 'Name', body: (person) => person.name },
+      { head: () => 'Role', body: (person) => person.role },
+    ],
+  });
+
+  return (
+    <table>
+      <thead>
+        {table.head.map((row) => (
+          <tr key={row.id}>
+            {row.cells.map((cell) => (
+              <th key={cell.id}>{cell.value}</th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {table.customBody.map((row) => (
+          <tr key={row.id}>
+            {row.cells.map((cell) => (
+              <td key={cell.id}>{cell.value}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+```
+
+## Render values, not components
+
+Column functions may return strings, numbers, React nodes, or your own component output. Boring Table stores those
+values on cells but never chooses the containing HTML. This makes the same row model suitable for semantic tables,
+virtualized grids, or custom responsive layouts.
+
+## Add behavior
+
+Pass plugin instances in `plugins` and render `table.customBody` for transformed output.
+
+```tsx
+import { FilterPlugin, PaginationPlugin, useTable } from 'react-boring-table';
+
+const table = useTable({
+  data: people,
+  getId: (person) => person.id,
+  columns,
+  plugins: [
+    new FilterPlugin({
+      initialValue: '',
+      filter: (person, query) => person.name.toLowerCase().includes(query.toLowerCase()),
+    }),
+    new PaginationPlugin({ pageSize: 20 }),
+  ],
+});
+```
+
+The plugins expose typed controls through `table.extensions`. See the [plugin guide](/docs/plugins) for the built-in
+modules and lifecycle.

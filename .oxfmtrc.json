@@ -5,6 +5,7 @@
   "bracketSpacing": true,
   "endOfLine": "lf",
   "ignorePatterns": [
+    "**/.next/**",
     "**/.output/**",
     "**/.source/**",
     "**/build/**",
@@ -12,6 +13,7 @@
     "**/dist/**",
     ".idea/**",
     "assets/**",
+    "docs/next-env.d.ts",
     "docs/package-lock.json",
     "docs/public/**",
     "docs/src/routeTree.gen.ts",

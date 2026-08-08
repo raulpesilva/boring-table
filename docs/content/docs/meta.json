@@ -1,0 +1,4 @@
+{
+  "title": "Boring Table",
+  "pages": ["index", "installation", "boring-table-core", "react-boring-table", "plugins", "api-reference"]
+}
