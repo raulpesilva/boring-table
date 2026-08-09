@@ -1,10 +1,13 @@
 ---
 title: React binding
-description: Use the Boring Table row model in React 18 and 19 with the useTable hook.
+description: Use the Boring Table row model in React 16.8 and newer with the useTable hook.
 ---
 
 `react-boring-table` re-exports the core and adds `useTable`. The hook keeps one table instance, updates its options
 when inputs change, and subscribes React through `useSyncExternalStore`.
+
+The package includes the compatibility shim. It delegates to React's native `useSyncExternalStore` when available and
+uses its fallback on React 16.8 and 17, so no additional package installation is required.
 
 ## Create the model
 

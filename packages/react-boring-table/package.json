@@ -49,11 +49,10 @@
     "@types/use-sync-external-store": "^1.5.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "tsconfig": "workspace:*",
-    "use-sync-external-store": "^1.5.0"
+    "tsconfig": "workspace:*"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "react": ">=16.8.0"
   },
   "engines": {
     "node": ">=18.0.0"

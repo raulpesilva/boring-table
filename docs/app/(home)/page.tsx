@@ -43,7 +43,7 @@ const apiRows = [
   {
     index: '02',
     name: 'useTable',
-    description: 'Create and subscribe to the same table model from React 18 or 19.',
+    description: 'Create and subscribe to the same table model from React 16.8 or newer.',
     href: '/docs/api-reference#usetable',
   },
   {

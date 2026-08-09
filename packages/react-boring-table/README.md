@@ -20,11 +20,14 @@ Este guia mostra como começar usando o exemplo real de `src/example/App.js`.
 
 ## Instalação
 
-Instale o pacote React e o peer `use-sync-external-store`:
+Instale apenas o pacote React:
 
 ```powershell
-pnpm add react-boring-table use-sync-external-store
+pnpm add react-boring-table
 ```
+
+React 16.8 ou mais recente é suportado. O pacote inclui `use-sync-external-store`: em versões recentes do React, o
+shim usa a implementação nativa; em versões anteriores ao React 18, ele fornece o fallback compatível.
 
 Observação: `react-boring-table` reexporta a API do core (`boring-table`). Você pode importar tudo direto de `react-boring-table`.
 

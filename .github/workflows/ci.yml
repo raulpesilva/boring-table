@@ -35,7 +35,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 24]
+        include:
+          - node-version: 18
+            react-version: 16.14.0
+          - node-version: 18
+            react-version: 17.0.2
+          - node-version: 24
+            react-version: 18.3.1
+          - node-version: 24
+            react-version: 19.2.3
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -48,6 +56,6 @@ jobs:
           mkdir fixture
           cd fixture
           npm init --yes
-          npm install ../artifacts/boring-table-*.tgz ../artifacts/react-boring-table-*.tgz react@18 use-sync-external-store
+          npm install ../artifacts/boring-table-*.tgz ../artifacts/react-boring-table-*.tgz react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }}
           node --input-type=module --eval "import assert from 'node:assert/strict'; import { createBoringTable } from 'boring-table'; import { useTable } from 'react-boring-table'; const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"
-          node --eval "const assert = require('node:assert/strict'); const { createBoringTable } = require('boring-table'); const { useTable } = require('react-boring-table'); const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"
+          node --eval "const assert = require('node:assert/strict'); const React = require('react'); const { renderToStaticMarkup } = require('react-dom/server'); const { useTable } = require('react-boring-table'); function Consumer() { const table = useTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); return React.createElement('span', null, table.body[0].cells[0].value) } assert.equal(renderToStaticMarkup(React.createElement(Consumer)), '<span>1</span>')"
