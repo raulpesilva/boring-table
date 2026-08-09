@@ -1,5 +1,11 @@
 # boring-table
 
+## 0.1.3
+
+### Patch Changes
+
+- 528a14c: Modernize the build, test, lint, formatting, and package validation toolchain while preserving ESM and CommonJS support.
+
 ## 0.1.2
 
 ### Patch Changes

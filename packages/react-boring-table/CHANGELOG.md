@@ -1,5 +1,14 @@
 # react-boring-table
 
+## 0.1.3
+
+### Patch Changes
+
+- 528a14c: Modernize the build, test, lint, formatting, and package validation toolchain while preserving ESM and CommonJS support.
+- b57446d: Support React 16.8 and newer through the included `use-sync-external-store` compatibility shim, without requiring consumers to install the shim separately.
+- Updated dependencies [528a14c]
+  - boring-table@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
