@@ -1,0 +1,10 @@
+# Release automation is a security boundary and requires owner review.
+/.github/workflows/ @raulpesilva
+/.github/CODEOWNERS @raulpesilva
+/.github/dependabot.yml @raulpesilva
+/scripts/release.mjs @raulpesilva
+/.changeset/config.json @raulpesilva
+/package.json @raulpesilva
+/pnpm-lock.yaml @raulpesilva
+/pnpm-workspace.yaml @raulpesilva
+/packages/*/package.json @raulpesilva

@@ -3,8 +3,7 @@ name: Pull request
 on:
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: pull-request-${{ github.event.pull_request.number }}
@@ -15,14 +14,16 @@ jobs:
     name: Quality and package
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '24'
           package-manager-cache: false
@@ -48,7 +49,7 @@ jobs:
           pnpm --dir packages/react-boring-table pack --pack-destination ../../artifacts
 
       - name: Upload packages
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: packages
           path: artifacts/*.tgz
@@ -74,22 +75,22 @@ jobs:
             react-version: 19.2.3
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: packages
           path: artifacts
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: ${{ matrix.node-version }}
           package-manager-cache: false
 
       - name: Test package consumers
-        run: |
+        run: | # zizmor: ignore[adhoc-packages] Isolated smoke test of local tarballs against an explicit compatibility matrix.
           mkdir fixture
           cd fixture
           npm init --yes
-          npm install ../artifacts/boring-table-*.tgz ../artifacts/react-boring-table-*.tgz react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }}
+          npm install --ignore-scripts --no-audit --no-fund ../artifacts/boring-table-*.tgz ../artifacts/react-boring-table-*.tgz react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }}
           node --input-type=module --eval "import assert from 'node:assert/strict'; import { createBoringTable } from 'boring-table'; import { useTable } from 'react-boring-table'; const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"
           node --eval "const assert = require('node:assert/strict'); const React = require('react'); const { renderToStaticMarkup } = require('react-dom/server'); const { useTable } = require('react-boring-table'); function Consumer() { const table = useTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); return React.createElement('span', null, table.body[0].cells[0].value) } assert.equal(renderToStaticMarkup(React.createElement(Consumer)), '<span>1</span>')"
