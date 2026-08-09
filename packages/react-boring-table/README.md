@@ -20,11 +20,14 @@ Este guia mostra como começar usando o exemplo real de `src/example/App.js`.
 
 ## Instalação
 
-Instale o pacote React e o peer `use-sync-external-store`:
+Instale apenas o pacote React:
 
 ```powershell
-pnpm add react-boring-table use-sync-external-store
+pnpm add react-boring-table
 ```
+
+React 16.8 ou mais recente é suportado. O pacote inclui `use-sync-external-store`: em versões recentes do React, o
+shim usa a implementação nativa; em versões anteriores ao React 18, ele fornece o fallback compatível.
 
 Observação: `react-boring-table` reexporta a API do core (`boring-table`). Você pode importar tudo direto de `react-boring-table`.
 
@@ -77,7 +80,7 @@ const options = createOptions({
       head: (extra, table) => (
         <th key={extra.id}>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={!!extra.getRow()?.isAllSelected}
             onChange={
               extra.getRow()?.isAllSelected || extra.getRow()?.hasSelectedRows
@@ -90,7 +93,7 @@ const options = createOptions({
       body: (_item, extra) => (
         <td key={extra.id}>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={!!extra.getRow()?.selected}
             onChange={() => extra.getRow().toggleSelect?.()}
           />
@@ -99,8 +102,16 @@ const options = createOptions({
       footer: (e) => <th key={e.id}>select</th>,
     },
     // Demais colunas de dados
-    { head: (e) => <th key={e.id}>firstName</th>, body: (item, e) => <td key={e.id}>{item.firstName}</td>, footer: (e) => <th key={e.id}>firstName</th> },
-    { head: (e) => <th key={e.id}>Last Name</th>, body: (item, e) => <td key={e.id}>{item.lastName}</td>, footer: (e) => <th key={e.id}>lastName</th> },
+    {
+      head: (e) => <th key={e.id}>firstName</th>,
+      body: (item, e) => <td key={e.id}>{item.firstName}</td>,
+      footer: (e) => <th key={e.id}>firstName</th>,
+    },
+    {
+      head: (e) => <th key={e.id}>Last Name</th>,
+      body: (item, e) => <td key={e.id}>{item.lastName}</td>,
+      footer: (e) => <th key={e.id}>lastName</th>,
+    },
     {
       head: (e) => <th key={e.id}>Age</th>,
       body: (item, extra) => (
@@ -114,9 +125,21 @@ const options = createOptions({
       ),
       footer: (e) => <th key={e.id}>age</th>,
     },
-    { head: (e) => <th key={e.id}>Visits</th>, body: (item, e) => <td key={e.id}>{item.visits}</td>, footer: (e) => <th key={e.id}>visits</th> },
-    { head: (e) => <th key={e.id}>Status</th>, body: (item, e) => <td key={e.id}>{item.status}</td>, footer: (e) => <th key={e.id}>status</th> },
-    { head: (e) => <th key={e.id}>Profile Progress</th>, body: (item, e) => <td key={e.id}>{item.progress}</td>, footer: (e) => <th key={e.id}>progress</th> },
+    {
+      head: (e) => <th key={e.id}>Visits</th>,
+      body: (item, e) => <td key={e.id}>{item.visits}</td>,
+      footer: (e) => <th key={e.id}>visits</th>,
+    },
+    {
+      head: (e) => <th key={e.id}>Status</th>,
+      body: (item, e) => <td key={e.id}>{item.status}</td>,
+      footer: (e) => <th key={e.id}>status</th>,
+    },
+    {
+      head: (e) => <th key={e.id}>Profile Progress</th>,
+      body: (item, e) => <td key={e.id}>{item.progress}</td>,
+      footer: (e) => <th key={e.id}>progress</th>,
+    },
   ],
   plugins: [
     new RowSelectPlugin(),
@@ -141,19 +164,21 @@ export default function App() {
 
   return (
     <div>
-  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {/* Mutação externa dos dados */}
-  <button onClick={() => setData((prev) => prev.slice(1))}>- first</button>
+        <button onClick={() => setData((prev) => prev.slice(1))}>- first</button>
         <button onClick={() => setData((prev) => [...prev])}>+ last (no-op)</button>
 
         {/* Paginação */}
-        <span>page {table.extensions.page} / {table.extensions.totalPages}</span>
+        <span>
+          page {table.extensions.page} / {table.extensions.totalPages}
+        </span>
         <button onClick={table.extensions.prevPage}>prev</button>
         <button onClick={table.extensions.nextPage}>next</button>
 
         {/* Filtro por idade */}
         <input
-          type="number"
+          type='number'
           value={table.extensions.criteria.age}
           onChange={(e) => table.extensions.filter((prev) => ({ ...prev, age: Number(e.target.value) }))}
           style={{ width: 64 }}
@@ -161,7 +186,7 @@ export default function App() {
         {/* Filtro: apenas selecionados */}
         <label>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={table.extensions.criteria.selected ?? false}
             onChange={() => table.extensions.filter((prev) => ({ ...prev, selected: !prev.selected }))}
           />

@@ -1,0 +1,225 @@
+name: Publish packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/boring-table-core/package.json
+      - packages/react-boring-table/package.json
+
+permissions: {}
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      should_publish: ${{ steps.plan.outputs.should_publish }}
+      should_release: ${{ steps.plan.outputs.should_release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Compare package versions
+        id: plan
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/release.mjs plan --base "$BEFORE_SHA" --output release-plan/release-plan.json
+
+      - name: Upload release plan
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plan
+          path: release-plan/release-plan.json
+          if-no-files-found: error
+          retention-days: 1
+
+  verify:
+    name: Verify and package
+    needs: plan
+    if: needs.plan.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      checksums_sha256: ${{ steps.package.outputs.checksums_sha256 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit
+
+      - name: Check, test, and build
+        run: pnpm check
+
+      - name: Download release plan
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release
+
+      - name: Create verified package bundle
+        id: package
+        run: node scripts/release.mjs pack --plan release/release-plan.json --output release
+
+      - name: Upload verified packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-packages
+          path: release
+          if-no-files-found: error
+          retention-days: 1
+
+  consumer-smoke:
+    name: Node ${{ matrix.node-version }} / React ${{ matrix.react-version }}
+    needs:
+      - plan
+      - verify
+    if: needs.plan.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node-version: 18
+            react-version: 16.14.0
+          - node-version: 18
+            react-version: 17.0.2
+          - node-version: 24
+            react-version: 18.3.1
+          - node-version: 24
+            react-version: 19.2.3
+    steps:
+      - name: Download verified packages
+        uses: actions/download-artifact@v8
+        with:
+          name: npm-packages
+          path: release
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          package-manager-cache: false
+
+      - name: Test package consumers
+        run: |
+          mkdir fixture
+          cd fixture
+          npm init --yes
+          npm install ../release/boring-table-*.tgz ../release/react-boring-table-*.tgz react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }}
+          node --input-type=module --eval "import assert from 'node:assert/strict'; import { createBoringTable } from 'boring-table'; import { useTable } from 'react-boring-table'; const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"
+          node --eval "const assert = require('node:assert/strict'); const React = require('react'); const { renderToStaticMarkup } = require('react-dom/server'); const { useTable } = require('react-boring-table'); function Consumer() { const table = useTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); return React.createElement('span', null, table.body[0].cells[0].value) } assert.equal(renderToStaticMarkup(React.createElement(Consumer)), '<span>1</span>')"
+
+  publish:
+    name: Publish to npm
+    needs:
+      - plan
+      - verify
+      - consumer-smoke
+    if: needs.plan.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: npm
+    permissions:
+      id-token: write
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Download verified packages
+        uses: actions/download-artifact@v8
+        with:
+          name: npm-packages
+          path: release
+
+      - name: Verify package integrity
+        env:
+          EXPECTED_SHA256: ${{ needs.verify.outputs.checksums_sha256 }}
+        run: node release/release.mjs verify --directory release --expected "$EXPECTED_SHA256"
+
+      - name: Publish packages
+        run: node release/release.mjs publish --plan release/release-plan.json --directory release
+
+  github-release:
+    name: Create GitHub releases
+    needs:
+      - plan
+      - publish
+    if: >-
+      always() &&
+      needs.plan.result == 'success' &&
+      needs.plan.outputs.should_release == 'true' &&
+      ((needs.plan.outputs.should_publish == 'true' && needs.publish.result == 'success') ||
+      (needs.plan.outputs.should_publish == 'false' && needs.publish.result == 'skipped'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Download release plan
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          path: release
+
+      - name: Create package tags and releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          node scripts/release.mjs github-release
+          --plan release/release-plan.json
+          --repository "${{ github.repository }}"
+          --target "${{ github.sha }}"

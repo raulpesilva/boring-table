@@ -20,7 +20,7 @@ export interface Cell<TData> extends BaseCell {
   value: TData;
 }
 
-export interface BaseRow<TData extends any, TExtra extends Record<string, any>> {
+export interface BaseRow<TData, TExtra extends Record<string, any>> {
   id: string;
   rawId: string;
   index: number;
@@ -37,7 +37,7 @@ export type ExtractExtra<
   T extends any[],
   K extends keyof T[number],
   TData extends any[],
-  K2 extends keyof T[number]
+  K2 extends keyof T[number],
 > = UnionToIntersection<
   | ReturnMethodValue<T, K>
   | BaseCell
@@ -126,7 +126,7 @@ export type ReturnTypeMethodFromArray<T extends any[], K extends keyof T[number]
 export interface BoringTableOptions<
   TData extends any[],
   TPlugins extends any[] = any[],
-  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[],
 > {
   data: TData;
   columns: TColumns;
@@ -137,7 +137,7 @@ export interface BoringTableOptions<
 export class BoringTable<
   TData extends any[] = any,
   TPlugins extends any[] = any[],
-  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[],
 > {
   numberOfUpdates = 0;
   changeObserver = new Observer();
@@ -453,7 +453,7 @@ export class BoringTable<
     };
     for (let i = 0; i < this.plugins.length; i++) {
       const plugin = this.plugins[i];
-      if (!!column) Object.assign(cell, plugin.onCreateHeadCell.bind(plugin)(cell));
+      if (column) Object.assign(cell, plugin.onCreateHeadCell.bind(plugin)(cell));
     }
     if (column) cell.value = column.head(cell, this);
 
@@ -512,7 +512,7 @@ export class BoringTable<
     };
     for (let i = 0; i < this.plugins.length; i++) {
       const plugin = this.plugins[i];
-      if (!!column) Object.assign(cell, plugin.onCreateFooterCell.bind(plugin)(cell));
+      if (column) Object.assign(cell, plugin.onCreateFooterCell.bind(plugin)(cell));
     }
     if (column) cell.value = column.footer(cell, this);
 

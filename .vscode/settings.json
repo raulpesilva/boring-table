@@ -1,7 +1,5 @@
 {
-  "cSpell.words": [
-    "mprocess",
-    "treeshake",
-    "tsnd"
-  ]
+  "cSpell.words": ["mprocess", "treeshake", "tsnd"],
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true
 }

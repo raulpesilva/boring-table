@@ -4,7 +4,7 @@ import { BASE_PRIORITIES, BoringPlugin, IBoringPlugin } from './base';
 export class PaginationPlugin<
   TData extends any[] = any,
   TPlugins extends IBoringPlugin[] = IBoringPlugin[],
-  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TColumns extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[],
 > extends BoringPlugin {
   get name() {
     return 'pagination-plugin';

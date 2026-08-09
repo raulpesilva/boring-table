@@ -1,0 +1,45 @@
+---
+title: Installation
+description: Install the framework-agnostic Boring Table core or its React binding with npm, pnpm, yarn, or Bun.
+---
+
+## Core package
+
+Install `boring-table` when you want the headless engine without a framework binding.
+
+```package-install
+boring-table
+```
+
+The package supports ESM and CommonJS, includes TypeScript declarations, and requires Node.js 18 or newer for its
+published runtime contract.
+
+## React package
+
+Install `react-boring-table` for `useTable`. It re-exports the complete core API, so one import path is enough in a
+React application.
+
+```package-install
+react-boring-table
+```
+
+React 16.8 and newer are supported. The package includes the `use-sync-external-store` shim, which uses React's native
+implementation when available and provides the compatible fallback on older versions.
+
+## Create a table
+
+```ts
+import { createBoringTable } from 'boring-table';
+
+const table = createBoringTable({
+  data: products,
+  getId: (product) => product.id,
+  columns: [
+    { head: () => 'Product', body: (product) => product.name },
+    { head: () => 'Price', body: (product) => product.price },
+  ],
+});
+```
+
+Render `table.customBody` when plugins such as filtering or pagination should affect the visible rows. The unmodified
+input order remains available through `table.body`.

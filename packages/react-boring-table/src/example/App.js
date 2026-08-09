@@ -125,7 +125,7 @@ const options = createOptions({
       head: (extra, table) => (
         <th key={extra.id}>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={!!extra.getRow()?.isAllSelected}
             onChange={
               extra.getRow()?.isAllSelected || extra.getRow()?.hasSelectedRows
@@ -138,8 +138,8 @@ const options = createOptions({
       body: (_item, extra) => (
         <td key={extra.id}>
           <input
-            className="mx-auto"
-            type="checkbox"
+            className='mx-auto'
+            type='checkbox'
             checked={!!extra.getRow()?.selected}
             onChange={() => extra.getRow().toggleSelect?.()}
           />
@@ -209,37 +209,37 @@ function App() {
   const [data, setData] = useState(() => list);
   const table = useTable({ data, ...options });
   return (
-    <div className="App">
+    <div className='App'>
       <div style={{ display: 'flex' }}>
-        <button onClick={() => setData(([_, ...rest]) => rest)} className="border p-2">
+        <button onClick={() => setData(([_, ...rest]) => rest)} className='border p-2'>
           - first
         </button>
-        <button onClick={() => setData((prev) => [...prev])} className="border p-2">
+        <button onClick={() => setData((prev) => [...prev])} className='border p-2'>
           + last
         </button>
-        <div className="border p-2">{table.extensions.page}</div>
-        <div className="border p-2">{table.extensions.lastPage}</div>
-        <button onClick={table.extensions.prevPage} className="border p-2">
+        <div className='border p-2'>{table.extensions.page}</div>
+        <div className='border p-2'>{table.extensions.lastPage}</div>
+        <button onClick={table.extensions.prevPage} className='border p-2'>
           prev
         </button>
-        <button onClick={table.extensions.nextPage} className="border p-2">
+        <button onClick={table.extensions.nextPage} className='border p-2'>
           next
         </button>
         <input
-          type="number"
+          type='number'
           value={table.extensions.criteria.age}
           onChange={(e) => table.extensions.filter((prev) => ({ ...prev, age: Number(e.target.value) }))}
-          className="border p-2 min-w-0 w-16"
+          className='border p-2 min-w-0 w-16'
         />
-        <div className="border p-2">
+        <div className='border p-2'>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={table.extensions.criteria.selected ?? false}
             onChange={() => table.extensions.filter((prev) => ({ ...prev, selected: !prev.selected }))}
-            className="border p-2"
+            className='border p-2'
           />
         </div>
-        <div className="border p-2">{table.extensions.selectedRows.length}</div>
+        <div className='border p-2'>{table.extensions.selectedRows.length}</div>
       </div>
       <table>
         <thead>

@@ -1,0 +1,53 @@
+---
+title: Introduction
+description: A headless, framework-agnostic table engine with a typed plugin pipeline and a React binding.
+---
+
+Boring Table turns typed data, column functions, and optional plugins into a row model you can render with any markup.
+The core does not ship components or styles, so your application keeps control of semantics, layout, and interaction.
+
+## Choose your package
+
+- [`boring-table`](/docs/boring-table-core) is the dependency-free core. Use it in any JavaScript or TypeScript runtime.
+- [`react-boring-table`](/docs/react-boring-table) re-exports the core and adds the `useTable` hook for React 16.8 and newer.
+
+## The assembly model
+
+```text
+data + columns + plugins
+          ↓
+     BoringTable
+          ↓
+head + body + customBody + footer
+```
+
+Columns describe how values are produced. Plugins can add properties to rows and cells, transform `customBody`, and
+expose behavior through `table.extensions`. Your renderer only consumes the resulting model.
+
+## Minimal example
+
+```ts
+import { createBoringTable } from 'boring-table';
+
+const table = createBoringTable({
+  data: [
+    { id: '1', name: 'Ada', role: 'Engineer' },
+    { id: '2', name: 'Linus', role: 'Maintainer' },
+  ],
+  getId: (person) => person.id,
+  columns: [
+    { head: () => 'Name', body: (person) => person.name },
+    { head: () => 'Role', body: (person) => person.role },
+  ],
+});
+
+for (const row of table.customBody) {
+  console.log(
+    row.id,
+    row.cells.map((cell) => cell.value)
+  );
+}
+```
+
+Continue with the [installation plan](/docs/installation), then choose the
+[core guide](/docs/boring-table-core) or [React guide](/docs/react-boring-table).

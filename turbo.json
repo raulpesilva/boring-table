@@ -1,21 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
+  "tasks": {
     "build": {
-      "outputs": ["build/**"],
+      "outputs": ["dist/**", ".next/**"],
       "dependsOn": ["^build"]
     },
-    "lint": {
-      "dependsOn": ["^lint"]
+    "typecheck": {
+      "dependsOn": ["^build", "^typecheck"]
     },
-    "test": {
-      "dependsOn": ["^build"]
-    },
-    "test:watch": {
-      "cache": false,
-      "persistent": true
-    },
-    "coverage": {},
     "dev": {
       "cache": false,
       "persistent": true

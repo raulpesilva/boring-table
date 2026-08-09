@@ -1,0 +1,95 @@
+name: Pull request
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit
+
+      - name: Check, test, and build
+        run: pnpm check
+
+      - name: Create package tarballs
+        run: |
+          mkdir artifacts
+          pnpm --dir packages/boring-table-core pack --pack-destination ../../artifacts
+          pnpm --dir packages/react-boring-table pack --pack-destination ../../artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: packages
+          path: artifacts/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+
+  consumer-smoke:
+    name: Node ${{ matrix.node-version }} / React ${{ matrix.react-version }}
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node-version: 18
+            react-version: 16.14.0
+          - node-version: 18
+            react-version: 17.0.2
+          - node-version: 24
+            react-version: 18.3.1
+          - node-version: 24
+            react-version: 19.2.3
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: packages
+          path: artifacts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          package-manager-cache: false
+
+      - name: Test package consumers
+        run: |
+          mkdir fixture
+          cd fixture
+          npm init --yes
+          npm install ../artifacts/boring-table-*.tgz ../artifacts/react-boring-table-*.tgz react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }}
+          node --input-type=module --eval "import assert from 'node:assert/strict'; import { createBoringTable } from 'boring-table'; import { useTable } from 'react-boring-table'; const table = createBoringTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); assert.equal(table.body[0].cells[0].value, 1); assert.equal(typeof useTable, 'function')"
+          node --eval "const assert = require('node:assert/strict'); const React = require('react'); const { renderToStaticMarkup } = require('react-dom/server'); const { useTable } = require('react-boring-table'); function Consumer() { const table = useTable({ data: [{ id: 'one', value: 1 }], getId: (item) => item.id, columns: [{ body: (item) => item.value }] }); return React.createElement('span', null, table.body[0].cells[0].value) } assert.equal(renderToStaticMarkup(React.createElement(Consumer)), '<span>1</span>')"

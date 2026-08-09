@@ -1,0 +1,70 @@
+---
+title: Core
+description: Build typed row models with createBoringTable, column functions, events, and plugin extensions.
+---
+
+The `boring-table` package is the framework-agnostic engine. It has no runtime dependencies and makes no rendering
+decisions.
+
+## Define the options
+
+```ts
+import { createBoringTable, createOptions } from 'boring-table';
+
+const options = createOptions({
+  data: users,
+  getId: (user) => user.id,
+  columns: [
+    {
+      head: () => 'Name',
+      body: (user) => user.name,
+      footer: () => 'People',
+    },
+  ],
+  plugins: [],
+});
+
+const table = createBoringTable(options);
+```
+
+`createOptions` returns the same object while preserving inference. `createBoringTable` constructs and processes the
+table model.
+
+## Read the row model
+
+| Property           | Role                                                |
+| ------------------ | --------------------------------------------------- |
+| `table.head`       | Header rows created from column `head` functions.   |
+| `table.body`       | Body rows in source-data order.                     |
+| `table.customBody` | The visible pipeline after plugin transformations.  |
+| `table.footer`     | Footer rows created from column `footer` functions. |
+
+Each row has a stable `id`, `rawId`, `index`, and `cells`. Each cell exposes its computed `value` and a `getRow()`
+function for reaching the parent row.
+
+## Update data and options
+
+```ts
+table.setData(nextUsers);
+
+table.setOptions({
+  data: nextUsers,
+  columns: nextColumns,
+});
+```
+
+Updates are scheduled through the internal event system. Use `waitForUpdates()` when you need to await the current
+processing batch.
+
+## Subscribe
+
+```ts
+const unsubscribe = table.subscribe(() => {
+  console.log('The table model changed');
+});
+
+unsubscribe();
+```
+
+The same subscription boundary powers the React binding. Continue with [plugins](/docs/plugins) to transform rows or
+add table extensions.

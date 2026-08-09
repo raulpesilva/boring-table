@@ -16,7 +16,7 @@ interface PluginOptions<QueryParams, FetchFn> {
 type Value = string | number | null | undefined;
 export class FetchPlugin<
   QueryParams extends Record<string, { value: Value | Value[]; requestOnChange: boolean }>,
-  FetchFn extends (queryString: string, queryParams: QueryParams) => Promise<{ data: any; extensions?: any }>
+  FetchFn extends (queryString: string, queryParams: QueryParams) => Promise<{ data: any; extensions?: any }>,
 > extends BoringPlugin {
   get name() {
     return 'fetch-plugin';

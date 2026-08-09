@@ -1,14 +1,12 @@
 import { BoringColumn, BoringTableOptions, IBoringPlugin, createBoringTable } from 'boring-table';
 import React from 'react';
-import useSyncExternalStoreExports from 'use-sync-external-store/shim';
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
 import { shallowEqual } from '../utils';
-
-const { useSyncExternalStore } = useSyncExternalStoreExports;
 
 export const useTable = <
   TData extends any[] = any,
   TPlugins extends IBoringPlugin[] = IBoringPlugin[],
-  TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[]
+  TColumn extends BoringColumn<TData, TPlugins>[] = BoringColumn<TData, TPlugins>[],
 >(
   options: BoringTableOptions<TData, TPlugins, TColumn>
 ) => {
