@@ -6,9 +6,12 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const registry = 'https://registry.npmjs.org/';
-const scriptFile = fileURLToPath(import.meta.url);
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const workspaceDirectory = path.resolve(scriptDirectory, '..');
+const commitShaPattern = /^[0-9a-f]{40}$/;
+const packageNamePattern = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
+const packageInfoFields = ['name', 'version', 'directory', 'manifestPath', 'changelogPath', 'npmTag', 'tag', 'tarball'];
+const candidateInfoFields = [...packageInfoFields, 'previousVersion', 'needsPublish'];
 
 const commandForPlatform = (command) => (process.platform === 'win32' ? `${command}.cmd` : command);
 
@@ -64,8 +67,50 @@ const sha256 = (file) => createHash('sha256').update(readFileSync(file)).digest(
 const packageTarballName = (name, version) => `${name.replace(/^@/, '').replaceAll('/', '-')}-${version}.tgz`;
 
 const validateVersion = (version) => {
-  if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)) {
+  if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)) {
     throw new Error(`Expected a semantic version, received: ${version}`);
+  }
+};
+
+const validatePackageName = (name) => {
+  if (typeof name !== 'string' || name.length > 214 || !packageNamePattern.test(name)) {
+    throw new Error(`Expected a valid lowercase npm package name, received: ${name}`);
+  }
+};
+
+const validateCommitSha = (sha, label) => {
+  if (typeof sha !== 'string' || !commitShaPattern.test(sha)) {
+    throw new Error(`Expected ${label} to be a full commit SHA, received: ${sha}`);
+  }
+};
+
+const assertObject = (value, label) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`Expected ${label} to be an object.`);
+  }
+};
+
+const assertExactKeys = (value, expectedKeys, label) => {
+  assertObject(value, label);
+  const actualKeys = Object.keys(value).sort();
+  const sortedExpectedKeys = [...expectedKeys].sort();
+
+  if (JSON.stringify(actualKeys) !== JSON.stringify(sortedExpectedKeys)) {
+    throw new Error(`Unexpected fields in ${label}: ${actualKeys.join(', ')}`);
+  }
+};
+
+const assertSameStringArray = (actual, expected, label) => {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`Unexpected ${label}. Expected ${expected.join(', ')}, received ${actual.join(', ')}.`);
+  }
+};
+
+const assertPackageValues = (actual, expected, label) => {
+  for (const field of packageInfoFields) {
+    if (actual[field] !== expected[field]) {
+      throw new Error(`Unexpected ${label}.${field}. Expected ${expected[field]}, received ${actual[field]}.`);
+    }
   }
 };
 
@@ -145,6 +190,7 @@ const publicPackages = () => {
         return null;
       }
 
+      validatePackageName(manifest.name);
       validateVersion(manifest.version);
 
       const relativeDirectory = path.relative(workspaceDirectory, directory).replaceAll(path.sep, '/');
@@ -203,6 +249,74 @@ const publicPackages = () => {
   return ordered.map(({ dependencies, ...packageInfo }) => packageInfo);
 };
 
+const validateReleasePlan = (plan, expectedHead) => {
+  assertExactKeys(plan, ['schemaVersion', 'base', 'head', 'packages', 'candidates'], 'release plan');
+
+  if (plan.schemaVersion !== 1) {
+    throw new Error(`Unsupported release plan schema version: ${plan.schemaVersion}`);
+  }
+
+  validateCommitSha(plan.base, 'release plan base');
+  validateCommitSha(plan.head, 'release plan head');
+  validateCommitSha(expectedHead, 'expected release head');
+
+  if (plan.head !== expectedHead) {
+    throw new Error(`Release plan targets ${plan.head}, expected ${expectedHead}.`);
+  }
+
+  if (!Array.isArray(plan.packages) || !Array.isArray(plan.candidates)) {
+    throw new Error('Release plan packages and candidates must be arrays.');
+  }
+
+  const expectedPackages = publicPackages();
+
+  if (plan.packages.length !== expectedPackages.length) {
+    throw new Error(`Release plan contains ${plan.packages.length} packages; expected ${expectedPackages.length}.`);
+  }
+
+  for (let index = 0; index < expectedPackages.length; index += 1) {
+    const actual = plan.packages[index];
+    const expected = expectedPackages[index];
+    assertExactKeys(actual, packageInfoFields, `release plan package ${index}`);
+    assertPackageValues(actual, expected, `release plan package ${index}`);
+  }
+
+  const packageByName = new Map(
+    expectedPackages.map((packageInfo, index) => [packageInfo.name, { packageInfo, index }])
+  );
+  const candidateNames = new Set();
+  let previousCandidateIndex = -1;
+
+  for (let index = 0; index < plan.candidates.length; index += 1) {
+    const candidate = plan.candidates[index];
+    assertExactKeys(candidate, candidateInfoFields, `release candidate ${index}`);
+    const expected = packageByName.get(candidate.name);
+
+    if (!expected || candidateNames.has(candidate.name) || expected.index <= previousCandidateIndex) {
+      throw new Error(`Unexpected or duplicate release candidate: ${candidate.name}`);
+    }
+
+    assertPackageValues(candidate, expected.packageInfo, `release candidate ${index}`);
+
+    if (candidate.previousVersion !== null) {
+      validateVersion(candidate.previousVersion);
+
+      if (candidate.previousVersion === candidate.version) {
+        throw new Error(`Release candidate ${candidate.name} did not change version.`);
+      }
+    }
+
+    if (typeof candidate.needsPublish !== 'boolean') {
+      throw new Error(`Release candidate ${candidate.name} has an invalid needsPublish value.`);
+    }
+
+    candidateNames.add(candidate.name);
+    previousCandidateIndex = expected.index;
+  }
+
+  return plan;
+};
+
 const manifestAtRevision = (revision, manifestPath) => {
   if (!revision || /^0+$/.test(revision)) {
     return null;
@@ -257,6 +371,7 @@ const createPlan = (base, outputFile) => {
     candidates,
   };
 
+  validateReleasePlan(plan, head);
   writeJson(outputFile, plan);
   appendOutput('should_publish', String(candidates.some((packageInfo) => packageInfo.needsPublish)));
   appendOutput('should_release', String(candidates.length > 0));
@@ -273,7 +388,8 @@ const createPlan = (base, outputFile) => {
 };
 
 const packRelease = (planFile, outputDirectory) => {
-  const plan = readJson(planFile);
+  const head = run('git', ['rev-parse', 'HEAD']).stdout.trim();
+  const plan = validateReleasePlan(readJson(planFile), head);
   mkdirSync(outputDirectory, { recursive: true });
 
   for (const packageInfo of plan.packages) {
@@ -296,10 +412,9 @@ const packRelease = (planFile, outputDirectory) => {
     writeFileSync(planDestination, readFileSync(sourcePlan));
   }
 
-  const scriptDestination = path.resolve(outputDirectory, 'release.mjs');
-  writeFileSync(scriptDestination, readFileSync(scriptFile));
-
-  const files = ['release-plan.json', 'release.mjs', ...plan.packages.map((packageInfo) => packageInfo.tarball)].sort();
+  const files = ['release-plan.json', ...plan.packages.map((packageInfo) => packageInfo.tarball)].sort();
+  const outputFiles = readdirSync(outputDirectory).sort();
+  assertSameStringArray(outputFiles, files, 'release bundle files');
   const checksumFile = path.resolve(outputDirectory, 'SHA256SUMS');
   const checksums = files.map((file) => `${sha256(path.resolve(outputDirectory, file))}  ${file}`).join('\n');
   writeFileSync(checksumFile, `${checksums}\n`);
@@ -309,7 +424,11 @@ const packRelease = (planFile, outputDirectory) => {
   console.log(`Created ${plan.packages.length} package tarball(s); SHA256SUMS digest is ${checksumsSha256}.`);
 };
 
-const verifyRelease = (directory, expectedChecksumsSha256) => {
+const verifyRelease = (directory, expectedChecksumsSha256, expectedHead) => {
+  if (!/^[a-f0-9]{64}$/.test(expectedChecksumsSha256)) {
+    throw new Error('Expected checksum manifest digest to be a SHA-256 value.');
+  }
+
   const checksumFile = path.resolve(directory, 'SHA256SUMS');
   const actualChecksumsSha256 = sha256(checksumFile);
 
@@ -317,7 +436,12 @@ const verifyRelease = (directory, expectedChecksumsSha256) => {
     throw new Error('The downloaded checksum manifest does not match the verified checksum manifest.');
   }
 
+  const plan = validateReleasePlan(readJson(path.resolve(directory, 'release-plan.json')), expectedHead);
+  const expectedFiles = ['release-plan.json', ...plan.packages.map((packageInfo) => packageInfo.tarball)].sort();
+  const directoryFiles = readdirSync(directory).sort();
+  assertSameStringArray(directoryFiles, ['SHA256SUMS', ...expectedFiles].sort(), 'release directory files');
   const lines = readFileSync(checksumFile, 'utf8').trim().split('\n');
+  const checksumFiles = [];
 
   for (const line of lines) {
     const match = /^([a-f0-9]{64})  ([^/\\]+)$/.exec(line);
@@ -329,10 +453,18 @@ const verifyRelease = (directory, expectedChecksumsSha256) => {
     const [, expected, file] = match;
     const target = path.resolve(directory, file);
 
-    if (!existsSync(target) || sha256(target) !== expected) {
+    if (checksumFiles.includes(file)) {
+      throw new Error(`Duplicate checksum entry: ${file}`);
+    }
+
+    checksumFiles.push(file);
+
+    if (!existsSync(target) || !statSync(target).isFile() || sha256(target) !== expected) {
       throw new Error(`Integrity verification failed for ${file}.`);
     }
   }
+
+  assertSameStringArray(checksumFiles.sort(), expectedFiles, 'checksum entries');
 
   console.log(`Verified ${lines.length} release artifact(s).`);
 };
@@ -345,9 +477,9 @@ const verifyNpmVersion = () => {
   }
 };
 
-const publishRelease = (planFile, directory) => {
+const publishRelease = (planFile, directory, expectedHead) => {
   verifyNpmVersion();
-  const plan = readJson(planFile);
+  const plan = validateReleasePlan(readJson(planFile), expectedHead);
 
   for (const packageInfo of plan.candidates) {
     if (npmVersionExists(packageInfo.name, packageInfo.version)) {
@@ -357,6 +489,11 @@ const publishRelease = (planFile, directory) => {
 
     assertPublishableVersion(packageInfo);
     const tarball = path.resolve(directory, packageInfo.tarball);
+
+    if (!existsSync(tarball) || !statSync(tarball).isFile()) {
+      throw new Error(`Verified package tarball is missing: ${packageInfo.tarball}`);
+    }
+
     run(
       commandForPlatform('npm'),
       [
@@ -452,8 +589,8 @@ const createAnnotatedTag = (repository, tag, target) => {
 };
 
 const createGitHubReleases = (planFile, repository, target) => {
-  const plan = readJson(planFile);
   const targetCommit = run('git', ['rev-parse', target]).stdout.trim();
+  const plan = validateReleasePlan(readJson(planFile), targetCommit);
 
   for (const packageInfo of plan.candidates) {
     if (!npmVersionExists(packageInfo.name, packageInfo.version)) {
@@ -528,10 +665,18 @@ const main = () => {
       packRelease(path.resolve(getOption(args, '--plan')), path.resolve(getOption(args, '--output')));
       break;
     case 'verify':
-      verifyRelease(path.resolve(getOption(args, '--directory')), getOption(args, '--expected'));
+      verifyRelease(
+        path.resolve(getOption(args, '--directory')),
+        getOption(args, '--expected'),
+        getOption(args, '--head')
+      );
       break;
     case 'publish':
-      publishRelease(path.resolve(getOption(args, '--plan')), path.resolve(getOption(args, '--directory')));
+      publishRelease(
+        path.resolve(getOption(args, '--plan')),
+        path.resolve(getOption(args, '--directory')),
+        getOption(args, '--head')
+      );
       break;
     case 'github-release':
       createGitHubReleases(
