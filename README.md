@@ -433,6 +433,19 @@ Useful commands:
 
 Package builds use tsdown and emit ESM, CommonJS, source maps, and declarations in `dist`.
 
+## Releases
+
+Changes that affect a published package should include a Changeset. When the accumulated changes are ready for a
+release, run the **Prepare release** workflow manually from GitHub Actions. It creates or updates a release pull
+request with the package versions and changelogs.
+
+After that pull request is reviewed and merged, the publish workflow detects the changed package versions, verifies
+the package tarballs, runs the consumer smoke tests, and publishes through npm Trusted Publishing. It then creates a
+tag and GitHub Release for each changed package using the `package@version` convention.
+
+Repository maintainers must allow GitHub Actions to create pull requests, create an `npm` deployment environment,
+and configure `publish.yml` as the trusted publisher for both npm packages.
+
 ## License
 
 MIT

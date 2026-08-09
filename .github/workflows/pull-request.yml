@@ -1,39 +1,67 @@
-name: CI
+name: Pull request
 
 on:
-  push:
-    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   quality:
+    name: Quality and package
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm audit
-      - run: pnpm check
-      - run: |
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies
+        run: pnpm audit
+
+      - name: Check, test, and build
+        run: pnpm check
+
+      - name: Create package tarballs
+        run: |
           mkdir artifacts
           pnpm --dir packages/boring-table-core pack --pack-destination ../../artifacts
           pnpm --dir packages/react-boring-table pack --pack-destination ../../artifacts
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
         with:
           name: packages
           path: artifacts/*.tgz
+          if-no-files-found: error
+          retention-days: 1
 
   consumer-smoke:
+    name: Node ${{ matrix.node-version }} / React ${{ matrix.react-version }}
     needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
         include:
           - node-version: 18
@@ -45,14 +73,20 @@ jobs:
           - node-version: 24
             react-version: 19.2.3
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download packages
+        uses: actions/download-artifact@v8
         with:
           name: packages
           path: artifacts
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
-      - run: |
+          package-manager-cache: false
+
+      - name: Test package consumers
+        run: |
           mkdir fixture
           cd fixture
           npm init --yes
