@@ -16,17 +16,17 @@
     "fumadocs-core": "16.14.2",
     "fumadocs-mdx": "15.2.2",
     "fumadocs-ui": "16.14.2",
-    "next": "16.3.0",
+    "next": "16.4.5",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.3.3",
+    "@tailwindcss/postcss": "4.3.5",
     "@types/mdx": "2.0.13",
     "@types/node": "25.0.6",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.5",
     "typescript": "5.9.3"
   }
 }
